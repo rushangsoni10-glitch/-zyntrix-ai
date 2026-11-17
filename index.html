@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zyntrix — Autonomous AI Workflow Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+  <header class="border-b border-slate-800 px-6 py-4 flex justify-between items-center max-w-6xl mx-auto">
+    <div class="flex items-center gap-2 font-bold text-xl">
+      <span class="bg-indigo-600 px-2.5 py-1 rounded-lg">Z</span> Zyntrix
+    </div>
+    <nav class="hidden md:flex gap-6 text-sm text-slate-300">
+      <a href="#sandbox" class="hover:text-white">Live AI Sandbox</a>
+      <a href="#pricing" class="hover:text-white">Pricing</a>
+    </nav>
+    <a href="#pricing" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold">Upgrade Pro</a>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-12">
+    <section class="text-center mb-12">
+      <span class="text-xs uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full">Live Gemini 3.5 AI Engine</span>
+      <h1 class="text-4xl md:text-5xl font-extrabold mt-4">Automate Emails, Reels & Customer Replies in Seconds</h1>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Built for Indian creators, agencies, and D2C brands. Pick a workflow below and run real AI agents instantly.</p>
+    </section>
+
+    <section id="sandbox" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+        <h2 class="text-lg font-bold">⚡ Live AI Workflow Engine <span id="runsBadge" class="ml-2 text-xs bg-slate-800 text-indigo-300 px-2.5 py-1 rounded-full">3 Free Runs Left Today</span></h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <button onclick="setPreset('Write 3 high-converting cold emails for a digital marketing agency targeting Indian D2C clothing brands.')" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">Cold Emails</button>
+          <button onclick="setPreset('Create a 30-second Instagram Reel script with 5-second visual scene prompts, voiceover, and caption for a skincare brand.')" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">IG Reel Video Script</button>
+          <button onclick="setPreset('Write 3 polite, persuasive WhatsApp customer support replies for delayed delivery, COD confirmation, and discount inquiry.')" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">WhatsApp Replies</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-3">
+        <input id="promptInput" type="text" value="Write 3 high-converting cold emails for a digital marketing agency targeting Indian D2C clothing brands." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" />
+        <button id="runBtn" onclick="runWorkflow()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 px-6 py-3 rounded-xl font-semibold text-sm whitespace-nowrap">▶ Run Gemini Workflow</button>
+      </div>
+
+      <div class="mt-6 bg-slate-950 border border-slate-800 rounded-xl p-5">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs uppercase tracking-wider text-slate-400">AI Deliverable Output</span>
+          <button onclick="copyOutput()" class="text-xs text-indigo-400 hover:underline">Copy Output</button>
+        </div>
+        <pre id="outputBox" class="whitespace-pre-wrap text-sm text-slate-200 leading-relaxed min-h-[140px]">Click "Run Gemini Workflow" above to generate your output...</pre>
+      </div>
+    </section>
+
+    <section id="pricing" class="mt-16">
+      <h2 class="text-2xl font-bold text-center mb-8">Simple INR Plans (UPI / Cards Accepted)</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 class="font-bold text-lg">Free Starter</h3>
+          <p class="text-3xl font-extrabold mt-2">₹0<span class="text-sm font-normal text-slate-400">/mo</span></p>
+          <ul class="text-sm text-slate-400 mt-4 space-y-2">
+            <li>• 3 AI Workflow Runs / Day</li>
+            <li>• Email & Reel Script Templates</li>
+          </ul>
+          <a href="#sandbox" class="mt-6 block text-center bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-sm font-semibold">Try Free Above</a>
+        </div>
+
+        <div class="bg-slate-900 border-2 border-indigo-500 rounded-2xl p-6">
+          <h3 class="font-bold text-lg text-indigo-400">Creator & Business Pro</h3>
+          <p class="text-3xl font-extrabold mt-2">₹499<span class="text-sm font-normal text-slate-400">/mo</span></p>
+          <ul class="text-sm text-slate-300 mt-4 space-y-2">
+            <li>• Unlimited Daily AI Workflows</li>
+            <li>• Full Reel Video Scene Prompts</li>
+            <li>• WhatsApp & Cold Email Packs</li>
+          </ul>
+          <!-- Replace # below with your Razorpay Payment Link -->
+          <a href="#" onclick="alert('Paste your Razorpay ₹499 Payment Link inside index.html!')" class="mt-6 block text-center bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl text-sm font-semibold">Pay ₹499 via UPI / Card</a>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 class="font-bold text-lg">Agency Unlimited</h3>
+          <p class="text-3xl font-extrabold mt-2">₹1,499<span class="text-sm font-normal text-slate-400">/mo</span></p>
+          <ul class="text-sm text-slate-400 mt-4 space-y-2">
+            <li>• Multi-Client Brand Voices</li>
+            <li>• Priority Fast Queue</li>
+            <li>• 1-on-1 Setup Support</li>
+          </ul>
+          <!-- Replace # below with your Razorpay Payment Link -->
+          <a href="#" onclick="alert('Paste your Razorpay ₹1,499 Payment Link inside index.html!')" class="mt-6 block text-center bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-sm font-semibold">Pay ₹1,499 via UPI / Card</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const MAX_FREE_RUNS = 3;
+    const todayKey = "zyntrix_runs_" + new Date().toISOString().slice(0, 10);
+
+    function getRunsUsed() {
+      return parseInt(localStorage.getItem(todayKey) || "0", 10);
+    }
+
+    function updateBadge() {
+      const left = Math.max(0, MAX_FREE_RUNS - getRunsUsed());
+      document.getElementById("runsBadge").textContent = `${left} Free Runs Left Today`;
+    }
+
+    function setPreset(text) {
+      document.getElementById("promptInput").value = text;
+    }
+
+    function copyOutput() {
+      navigator.clipboard.writeText(document.getElementById("outputBox").textContent);
+      alert("Copied to clipboard!");
+    }
+
+    async function runWorkflow() {
+      if (getRunsUsed() >= MAX_FREE_RUNS) {
+        document.getElementById("outputBox").textContent = "Daily free limit (3 runs) reached! Upgrade to Pro (₹499/mo) below for unlimited runs.";
+        return;
+      }
+
+      const prompt = document.getElementById("promptInput").value.trim();
+      const btn = document.getElementById("runBtn");
+      const out = document.getElementById("outputBox");
+
+      if (!prompt) return;
+      btn.disabled = true;
+      btn.textContent = "Running AI...";
+      out.textContent = "⏳ Connecting to Gemini AI Engine...";
+
+      try {
+        const res = await fetch("/.netlify/functions/gemini", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Server error");
+
+        localStorage.setItem(todayKey, String(getRunsUsed() + 1));
+        updateBadge();
+        out.textContent = data.output;
+      } catch (err) {
+        out.textContent = "⚠️ Error: " + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "▶ Run Gemini Workflow";
+      }
+    }
+
+    updateBadge();
+  </script>
+</body>
+</html>
