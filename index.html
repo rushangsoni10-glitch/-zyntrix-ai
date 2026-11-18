@@ -3,150 +3,316 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zyntrix — Autonomous AI Workflow Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Zyntrix — AI Workflow Engine for Businesses & Creators</title>
+  <meta name="description" content="Automate cold emails, Instagram Reel scripts, WhatsApp replies, and marketing campaigns with Zyntrix AI." />
+  
+  <!-- Supabase, Markdown Renderer & Sanitizer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
+  <style>
+    :root { --bg: #0b0f19; --card: #131a2a; --border: #232d45; --accent: #6366f1; --accent2: #10b981; --text: #f1f5f9; --muted: #94a3b8; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); background: #0d1322; position: sticky; top: 0; z-index: 10; }
+    .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+    .logo span { color: var(--accent); }
+    .nav-right { display: flex; gap: 12px; align-items: center; }
+    .badge { background: #1e293b; border: 1px solid var(--border); padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; }
+    button { cursor: pointer; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; transition: 0.2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-whatsapp { background: #25D366; color: #000; }
+    .layout { display: grid; grid-template-columns: 280px 1fr; max-width: 1300px; margin: 24px auto; gap: 24px; padding: 0 20px; }
+    @media (max-width: 850px) { .layout { grid-template-columns: 1fr; } }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    h2, h3 { margin-bottom: 12px; }
+    .templates { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .chip { background: #1e293b; color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; }
+    .chip:hover { border-color: var(--accent); }
+    textarea, input, select { width: 100%; background: #0b0f19; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 0.95rem; }
+    #output-box { margin-top: 20px; background: #0b0f19; border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-height: 140px; }
+    #output-box h1, #output-box h2, #output-box h3 { color: #a5b4fc; margin-top: 12px; }
+    #output-box ul, #output-box ol { margin-left: 20px; margin-bottom: 10px; }
+    .actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .history-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.85rem; }
+    .history-item:hover { background: #1e293b; border-radius: 6px; }
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 50; }
+    .modal { background: var(--card); border: 1px solid var(--border); padding: 24px; border-radius: 14px; width: 92%; max-width: 420px; }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased">
-  <header class="border-b border-slate-800 px-6 py-4 flex justify-between items-center max-w-6xl mx-auto">
-    <div class="flex items-center gap-2 font-bold text-xl">
-      <span class="bg-indigo-600 px-2.5 py-1 rounded-lg">Z</span> Zyntrix
+<body>
+
+  <!-- Top Navigation -->
+  <nav>
+    <div class="logo">Zyntrix<span>.ai</span></div>
+    <div class="nav-right">
+      <span id="credits-badge" class="badge" style="display:none;">Points: 0</span>
+      <button id="brand-btn" class="btn-outline" style="display:none;" onclick="openModal('brand-modal')">Brand Voice</button>
+      <button id="auth-btn" class="btn-primary" onclick="openModal('auth-modal')">Sign In / Start Free</button>
+      <button id="logout-btn" class="btn-outline" style="display:none;" onclick="logout()">Logout</button>
     </div>
-    <nav class="hidden md:flex gap-6 text-sm text-slate-300">
-      <a href="#sandbox" class="hover:text-white">Live AI Sandbox</a>
-      <a href="#pricing" class="hover:text-white">Pricing</a>
-    </nav>
-    <a href="#pricing" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold">Upgrade Pro</a>
-  </header>
+  </nav>
 
-  <main class="max-w-5xl mx-auto px-6 py-12">
-    <section class="text-center mb-12">
-      <span class="text-xs uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full">Live Gemini 3.5 AI Engine</span>
-      <h1 class="text-4xl md:text-5xl font-extrabold mt-4">Automate Emails, Reels & Customer Replies in Seconds</h1>
-      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Built for Indian creators, agencies, and D2C brands. Pick a workflow below and run real AI agents instantly.</p>
-    </section>
+  <!-- Main Workspace -->
+  <div class="layout">
+    <!-- Left Sidebar: Saved History -->
+    <aside class="panel">
+      <h3>Saved History</h3>
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">Click any past work to reload it.</p>
+      <div id="history-list">Log in to save and view your past workflows.</div>
+    </aside>
 
-    <section id="sandbox" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h2 class="text-lg font-bold">⚡ Live AI Workflow Engine <span id="runsBadge" class="ml-2 text-xs bg-slate-800 text-indigo-300 px-2.5 py-1 rounded-full">3 Free Runs Left Today</span></h2>
-        <div class="flex flex-wrap gap-2 text-xs">
-          <button onclick="setPreset('Write 3 high-converting cold emails for a digital marketing agency targeting Indian D2C clothing brands.')" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">Cold Emails</button>
-          <button onclick="setPreset('Create a 30-second Instagram Reel script with 5-second visual scene prompts, voiceover, and caption for a skincare brand.')" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">IG Reel Video Script</button>
-          <button onclick="setPreset('Write 3 polite, persuasive WhatsApp customer support replies for delayed delivery, COD confirmation, and discount inquiry.')" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">WhatsApp Replies</button>
-        </div>
+    <!-- Right Main Panel: Workflow Engine -->
+    <main class="panel">
+      <h2>AI Business Workflow Engine</h2>
+      <p style="color:var(--muted); margin-bottom:14px;">Pick a business template or type any custom problem below.</p>
+
+      <!-- Quick Problem Templates -->
+      <div class="templates">
+        <button class="chip" onclick="useTemplate('Cold Email Sequence', 'Write a 3-email B2B cold outreach sequence for our product targeting decision-makers in India.')">Cold Email Sequence</button>
+        <button class="chip" onclick="useTemplate('Viral IG Reel Script', 'Write a 30-second high-retention Instagram Reel script with a strong hook, value points, and CTA.')">IG Reel Script</button>
+        <button class="chip" onclick="useTemplate('WhatsApp Sales Reply', 'Write a persuasive WhatsApp reply to recover a customer who asked for the price and stopped replying.')">WhatsApp Follow-Up</button>
+        <button class="chip" onclick="useTemplate('3-in-1 Launch Pack', 'Create a complete mini-campaign: 1) Instagram Reel script, 2) Cold Email, and 3) WhatsApp broadcast message.')">3-in-1 Launch Pack</button>
       </div>
 
-      <div class="flex flex-col md:flex-row gap-3">
-        <input id="promptInput" type="text" value="Write 3 high-converting cold emails for a digital marketing agency targeting Indian D2C clothing brands." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" />
-        <button id="runBtn" onclick="runWorkflow()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 px-6 py-3 rounded-xl font-semibold text-sm whitespace-nowrap">▶ Run Gemini Workflow</button>
+      <textarea id="prompt-input" rows="4" maxlength="4000" placeholder="Describe your business task or customer problem in detail..."></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="queue-status" style="font-size:0.85rem; color:var(--accent2);"></span>
+        <button id="run-btn" class="btn-primary" onclick="enqueueWorkflow()">Run Gemini Workflow (1 Point)</button>
       </div>
 
-      <div class="mt-6 bg-slate-950 border border-slate-800 rounded-xl p-5">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-xs uppercase tracking-wider text-slate-400">AI Deliverable Output</span>
-          <button onclick="copyOutput()" class="text-xs text-indigo-400 hover:underline">Copy Output</button>
-        </div>
-        <pre id="outputBox" class="whitespace-pre-wrap text-sm text-slate-200 leading-relaxed min-h-[140px]">Click "Run Gemini Workflow" above to generate your output...</pre>
+      <!-- AI Output Area -->
+      <div id="output-box">Your generated business workflow will appear here...</div>
+
+      <div class="actions">
+        <button class="btn-outline" onclick="copyOutput()">Copy Text</button>
+        <button class="btn-whatsapp" onclick="shareWhatsApp()">Share on WhatsApp</button>
+        <button class="btn-outline" onclick="downloadTxt()">Download .txt</button>
       </div>
-    </section>
+    </main>
+  </div>
 
-    <section id="pricing" class="mt-16">
-      <h2 class="text-2xl font-bold text-center mb-8">Simple INR Plans (UPI / Cards Accepted)</h2>
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h3 class="font-bold text-lg">Free Starter</h3>
-          <p class="text-3xl font-extrabold mt-2">₹0<span class="text-sm font-normal text-slate-400">/mo</span></p>
-          <ul class="text-sm text-slate-400 mt-4 space-y-2">
-            <li>• 3 AI Workflow Runs / Day</li>
-            <li>• Email & Reel Script Templates</li>
-          </ul>
-          <a href="#sandbox" class="mt-6 block text-center bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-sm font-semibold">Try Free Above</a>
-        </div>
-
-        <div class="bg-slate-900 border-2 border-indigo-500 rounded-2xl p-6">
-          <h3 class="font-bold text-lg text-indigo-400">Creator & Business Pro</h3>
-          <p class="text-3xl font-extrabold mt-2">₹499<span class="text-sm font-normal text-slate-400">/mo</span></p>
-          <ul class="text-sm text-slate-300 mt-4 space-y-2">
-            <li>• Unlimited Daily AI Workflows</li>
-            <li>• Full Reel Video Scene Prompts</li>
-            <li>• WhatsApp & Cold Email Packs</li>
-          </ul>
-          <!-- Replace # below with your Razorpay Payment Link -->
-          <a href="#" onclick="alert('Paste your Razorpay ₹499 Payment Link inside index.html!')" class="mt-6 block text-center bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl text-sm font-semibold">Pay ₹499 via UPI / Card</a>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h3 class="font-bold text-lg">Agency Unlimited</h3>
-          <p class="text-3xl font-extrabold mt-2">₹1,499<span class="text-sm font-normal text-slate-400">/mo</span></p>
-          <ul class="text-sm text-slate-400 mt-4 space-y-2">
-            <li>• Multi-Client Brand Voices</li>
-            <li>• Priority Fast Queue</li>
-            <li>• 1-on-1 Setup Support</li>
-          </ul>
-          <!-- Replace # below with your Razorpay Payment Link -->
-          <a href="#" onclick="alert('Paste your Razorpay ₹1,499 Payment Link inside index.html!')" class="mt-6 block text-center bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-sm font-semibold">Pay ₹1,499 via UPI / Card</a>
-        </div>
+  <!-- Login / Signup Modal -->
+  <div id="auth-modal" class="modal-bg">
+    <div class="modal">
+      <h3>Welcome to Zyntrix</h3>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:14px;">Create an account to get 5 free workflow points and save your history.</p>
+      <input type="email" id="auth-email" placeholder="Enter your email" />
+      <input type="password" id="auth-pass" placeholder="Enter password (min 6 chars)" />
+      <div style="display:flex; gap:10px;">
+        <button class="btn-primary" style="flex:1;" onclick="handleAuth('login')">Log In</button>
+        <button class="btn-outline" style="flex:1;" onclick="handleAuth('signup')">Sign Up</button>
       </div>
-    </section>
-  </main>
+      <p id="auth-msg" style="color:#f87171; font-size:0.85rem; margin-top:10px;"></p>
+      <button class="btn-outline" style="width:100%; margin-top:12px;" onclick="closeModal('auth-modal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Brand Voice Modal -->
+  <div id="brand-modal" class="modal-bg">
+    <div class="modal">
+      <h3>Your Brand Voice</h3>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">Saved once and applied automatically to every AI output.</p>
+      <input type="text" id="brand-name" placeholder="Brand / Business Name (e.g., UrbanThreads India)" />
+      <input type="text" id="brand-audience" placeholder="Target Audience (e.g., Men aged 20-35 in Tier-1 cities)" />
+      <select id="brand-tone">
+        <option value="Professional & Persuasive">Professional & Persuasive</option>
+        <option value="Casual Hinglish (Indian Social Media)">Casual Hinglish (Indian Social Media)</option>
+        <option value="Bold & Direct Response">Bold & Direct Response</option>
+        <option value="Friendly & Helpful">Friendly & Helpful</option>
+      </select>
+      <button class="btn-primary" style="width:100%;" onclick="saveBrandVoice()">Save Brand Voice</button>
+      <button class="btn-outline" style="width:100%; margin-top:8px;" onclick="closeModal('brand-modal')">Close</button>
+    </div>
+  </div>
 
   <script>
-    const MAX_FREE_RUNS = 3;
-    const todayKey = "zyntrix_runs_" + new Date().toISOString().slice(0, 10);
+    // PASTE YOUR TWO SUPABASE KEYS BELOW:
+    const SUPABASE_URL = "https://ddqodzfdazjedojbtnjl.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcW9kemZkYXpqZWRvamJ0bmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDB9.EXAMPLE_ANON_KEY_PLACEHOLDER";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function getRunsUsed() {
-      return parseInt(localStorage.getItem(todayKey) || "0", 10);
+    let currentSession = null;
+    let currentWorkflowType = "Custom Workflow";
+    let rawOutputText = "";
+    const taskQueue = [];
+    let isProcessing = false;
+
+    // Initialize session on page load
+    sb.auth.onAuthStateChange((_event, session) => {
+      currentSession = session;
+      updateUIForUser();
+    });
+
+    async function updateUIForUser() {
+      const loggedIn = !!currentSession;
+      document.getElementById("auth-btn").style.display = loggedIn ? "none" : "inline-block";
+      document.getElementById("logout-btn").style.display = loggedIn ? "inline-block" : "none";
+      document.getElementById("credits-badge").style.display = loggedIn ? "inline-block" : "none";
+      document.getElementById("brand-btn").style.display = loggedIn ? "inline-block" : "none";
+
+      if (loggedIn) {
+        const { data: profile } = await sb.from("profiles").select("*").eq("id", currentSession.user.id).single();
+        if (profile) {
+          document.getElementById("credits-badge").innerText = `Points: ${profile.credits_remaining}`;
+          document.getElementById("brand-name").value = profile.brand_name || "";
+          document.getElementById("brand-audience").value = profile.target_audience || "";
+          document.getElementById("brand-tone").value = profile.brand_tone || "Professional & Persuasive";
+        }
+        loadHistory();
+      } else {
+        document.getElementById("history-list").innerText = "Log in to save and view your past workflows.";
+      }
     }
 
-    function updateBadge() {
-      const left = Math.max(0, MAX_FREE_RUNS - getRunsUsed());
-      document.getElementById("runsBadge").textContent = `${left} Free Runs Left Today`;
+    async function handleAuth(type) {
+      const email = document.getElementById("auth-email").value.trim();
+      const password = document.getElementById("auth-pass").value.trim();
+      const msg = document.getElementById("auth-msg");
+      msg.innerText = "Please wait...";
+
+      const res = type === "signup"
+        ? await sb.auth.signUp({ email, password })
+        : await sb.auth.signInWithPassword({ email, password });
+
+      if (res.error) {
+        msg.innerText = res.error.message;
+      } else {
+        msg.innerText = "";
+        closeModal("auth-modal");
+      }
     }
 
-    function setPreset(text) {
-      document.getElementById("promptInput").value = text;
+    async function logout() {
+      await sb.auth.signOut();
     }
 
-    function copyOutput() {
-      navigator.clipboard.writeText(document.getElementById("outputBox").textContent);
-      alert("Copied to clipboard!");
+    async function saveBrandVoice() {
+      if (!currentSession) return;
+      await sb.from("profiles").update({
+        brand_name: document.getElementById("brand-name").value,
+        target_audience: document.getElementById("brand-audience").value,
+        brand_tone: document.getElementById("brand-tone").value
+      }).eq("id", currentSession.user.id);
+      closeModal("brand-modal");
+      alert("Brand Voice saved!");
     }
 
-    async function runWorkflow() {
-      if (getRunsUsed() >= MAX_FREE_RUNS) {
-        document.getElementById("outputBox").textContent = "Daily free limit (3 runs) reached! Upgrade to Pro (₹499/mo) below for unlimited runs.";
+    async function loadHistory() {
+      const { data } = await sb
+        .from("generations")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(15);
+
+      const list = document.getElementById("history-list");
+      if (!data || data.length === 0) {
+        list.innerHTML = "<p style='font-size:0.85rem;color:#94a3b8;'>No saved runs yet.</p>";
         return;
       }
+      list.innerHTML = "";
+      data.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<strong>${item.workflow_type}</strong><br><span style="color:#94a3b8;">${item.prompt.slice(0, 45)}...</span>`;
+        div.onclick = () => renderOutput(item.output);
+        list.appendChild(div);
+      });
+    }
 
-      const prompt = document.getElementById("promptInput").value.trim();
-      const btn = document.getElementById("runBtn");
-      const out = document.getElementById("outputBox");
+    function useTemplate(type, text) {
+      currentWorkflowType = type;
+      document.getElementById("prompt-input").value = text;
+    }
 
-      if (!prompt) return;
-      btn.disabled = true;
-      btn.textContent = "Running AI...";
-      out.textContent = "⏳ Connecting to Gemini AI Engine...";
+    // Request Queue prevents burst overload when a user clicks rapidly
+    function enqueueWorkflow() {
+      if (!currentSession) {
+        openModal("auth-modal");
+        return;
+      }
+      const prompt = document.getElementById("prompt-input").value.trim();
+      if (!prompt) return alert("Please enter a prompt first.");
+
+      taskQueue.push({ prompt, workflowType: currentWorkflowType });
+      document.getElementById("queue-status").innerText = `In queue (${taskQueue.length})...`;
+      processQueue();
+    }
+
+    async function processQueue() {
+      if (isProcessing || taskQueue.length === 0) return;
+      isProcessing = true;
+      const runBtn = document.getElementById("run-btn");
+      runBtn.disabled = true;
+
+      const task = taskQueue.shift();
+      document.getElementById("queue-status").innerText = "Generating workflow...";
 
       try {
         const res = await fetch("/.netlify/functions/gemini", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt })
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentSession.access_token}`
+          },
+          body: JSON.stringify(task)
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Server error");
 
-        localStorage.setItem(todayKey, String(getRunsUsed() + 1));
-        updateBadge();
-        out.textContent = data.output;
-      } catch (err) {
-        out.textContent = "⚠️ Error: " + err.message;
+        const data = await res.json();
+
+        if (res.status === 402 || data.error === "OUT_OF_CREDITS") {
+          alert("You have used all your free points! Upgrade to Pro to continue.");
+        } else if (!res.ok) {
+          renderOutput(`**Notice:** ${data.error}`);
+        } else {
+          renderOutput(data.reply);
+          document.getElementById("credits-badge").innerText = `Points: ${data.creditsRemaining}`;
+          loadHistory();
+        }
+      } catch (e) {
+        renderOutput(`**Error:** ${e.message}`);
       } finally {
-        btn.disabled = false;
-        btn.textContent = "▶ Run Gemini Workflow";
+        // 1.5s spacing prevents rapid-fire overload
+        await new Promise((r) => setTimeout(r, 1500));
+        isProcessing = false;
+        runBtn.disabled = false;
+        document.getElementById("queue-status").innerText = taskQueue.length ? `In queue (${taskQueue.length})...` : "";
+        processQueue();
       }
     }
 
-    updateBadge();
+    function renderOutput(markdownText) {
+      rawOutputText = markdownText;
+      const cleanHTML = DOMPurify.sanitize(marked.parse(markdownText));
+      document.getElementById("output-box").innerHTML = cleanHTML;
+    }
+
+    function copyOutput() {
+      if (!rawOutputText) return;
+      navigator.clipboard.writeText(rawOutputText);
+      alert("Copied to clipboard!");
+    }
+
+    function shareWhatsApp() {
+      if (!rawOutputText) return;
+      window.open(`https://wa.me/?text=${encodeURIComponent(rawOutputText)}`, "_blank");
+    }
+
+    function downloadTxt() {
+      if (!rawOutputText) return;
+      const blob = new Blob([rawOutputText], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "zyntrix-workflow.txt";
+      a.click();
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = "flex"; }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
   </script>
 </body>
 </html>
