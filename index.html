@@ -131,7 +131,6 @@
   </div>
 
   <script>
-    // PASTE YOUR TWO SUPABASE KEYS BELOW:
     const SUPABASE_URL = "https://ddqodzfdazjedojbtnjl.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcW9kemZkYXpqZWRvamJ0bmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDB9.EXAMPLE_ANON_KEY_PLACEHOLDER";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -142,7 +141,6 @@
     const taskQueue = [];
     let isProcessing = false;
 
-    // Initialize session on page load
     sb.auth.onAuthStateChange((_event, session) => {
       currentSession = session;
       updateUIForUser();
@@ -229,7 +227,6 @@
       document.getElementById("prompt-input").value = text;
     }
 
-    // Request Queue prevents burst overload when a user clicks rapidly
     function enqueueWorkflow() {
       if (!currentSession) {
         openModal("auth-modal");
@@ -276,7 +273,6 @@
       } catch (e) {
         renderOutput(`**Error:** ${e.message}`);
       } finally {
-        // 1.5s spacing prevents rapid-fire overload
         await new Promise((r) => setTimeout(r, 1500));
         isProcessing = false;
         runBtn.disabled = false;
