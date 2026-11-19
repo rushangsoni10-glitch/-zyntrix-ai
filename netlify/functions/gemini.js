@@ -1,141 +1,159 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const { createClient } = require("@supabase/supabase-js");
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function callGeminiSafe(apiKey, payload) {
-  const models = ["gemini-3.5-flash", "gemini-2.5-flash-lite"];
-
-  for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }
-      );
-
-      if (response.ok) {
-        return await response.json();
-      }
-
-      if (response.status === 429 || response.status === 503) {
-        await sleep(2000 * (attempt + 1));
-        continue;
-      }
-
-      const errData = await response.json();
-      throw new Error(errData.error?.message || "Gemini API error");
-    }
-  }
-  throw new Error("HIGH_TRAFFIC");
-}
-
-export async function handler(event) {
+exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return {
+      statusCode: 405,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Method Not Allowed" })
+    };
   }
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || "https://ddqodzfdazjedojbtnjl.supabase.co";
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+  if (!geminiKey) {
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "GEMINI_API_KEY is missing in Netlify Environment Variables." })
+    };
+  }
+
+  if (!supabaseServiceKey) {
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Supabase service/secret key is missing in Netlify Environment Variables." })
+    };
+  }
+
+  const authHeader = event.headers.authorization || event.headers.Authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+
+  if (!token) {
+    return {
+      statusCode: 401,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Please sign in first to run workflows." })
+    };
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const authHeader = event.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "").trim();
-
-    if (!token) {
+    const { data: userData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !userData?.user) {
       return {
         statusCode: 401,
-        body: JSON.stringify({ error: "Please log in to run Zyntrix workflows." })
-      };
-    }
-
-    const { prompt, workflowType } = JSON.parse(event.body);
-    if (!prompt || prompt.length > 4000) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Prompt must be between 1 and 4000 characters." })
-      };
-    }
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return {
-        statusCode: 401,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ error: "Session expired. Please log in again." })
       };
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const userId = userData.user.id;
+    const { prompt, workflowType = "Custom Workflow" } = JSON.parse(event.body || "{}");
+
+    if (!prompt || !prompt.trim()) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Prompt is required." })
+      };
+    }
+
+    // Fetch user profile & credits
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("*")
-      .eq("id", user.id)
+      .select("credits_remaining, brand_name, target_audience, brand_tone")
+      .eq("id", userId)
       .single();
 
     if (profileError || !profile) {
-      return { statusCode: 404, body: JSON.stringify({ error: "User profile not found." }) };
+      return {
+        statusCode: 404,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "User profile not found in database." })
+      };
     }
 
-    if (profile.credits_remaining <= 0) {
+    if ((profile.credits_remaining ?? 0) < 1) {
       return {
         statusCode: 402,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ error: "OUT_OF_CREDITS" })
       };
     }
 
-    const brandContext = profile.brand_name
-      ? `\nBrand Name: ${profile.brand_name}\nTarget Audience: ${profile.target_audience || "General"}\nTone/Language Style: ${profile.brand_tone || "Professional & Persuasive"}`
-      : "";
+    // Build prompt with saved Brand Voice if available
+    const brandContext = [
+      profile.brand_name ? `Brand Name: ${profile.brand_name}` : "",
+      profile.target_audience ? `Target Audience: ${profile.target_audience}` : "",
+      profile.brand_tone ? `Tone/Style: ${profile.brand_tone}` : ""
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-    const systemPrompt = `You are Zyntrix, an expert AI business automation and growth engine.
-Deliver complete, actionable, ready-to-use outputs (cold emails, Instagram Reel scripts, WhatsApp messages, marketing plans, or custom workflows).
-Use clean Markdown headings, bold key points, and bullet lists. Never cut responses short.${brandContext}`;
+    const finalPrompt = brandContext
+      ? `Follow this brand context:\n${brandContext}\n\nTask:\n${prompt.trim()}`
+      : prompt.trim();
 
-    const geminiData = await callGeminiSafe(process.env.GEMINI_API_KEY, {
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: workflowType ? `[${workflowType}] ${prompt}` : prompt }]
-        }
-      ],
-      generationConfig: { maxOutputTokens: 4096 }
+    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: finalPrompt }] }]
+      })
     });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        statusCode: response.status,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: data.error?.message || "Gemini API error" })
+      };
+    }
+
     const reply =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Could not generate a response. Please try again.";
+      data.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text || "")
+        .join("")
+        .trim() || "No response generated.";
 
-    const newCredits = profile.credits_remaining - 1;
-    await supabase
+    // Deduct 1 credit
+    const updatedCredits = Math.max(0, (profile.credits_remaining ?? 0) - 1);
+    await supabaseAdmin
       .from("profiles")
-      .update({ credits_remaining: newCredits })
-      .eq("id", user.id);
+      .update({ credits_remaining: updatedCredits })
+      .eq("id", userId);
 
-    await supabase.from("generations").insert({
-      user_id: user.id,
-      workflow_type: workflowType || "Custom Workflow",
-      prompt,
+    // Save to history
+    await supabaseAdmin.from("generations").insert({
+      user_id: userId,
+      workflow_type: workflowType,
+      prompt: prompt.trim(),
       output: reply
     });
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reply, creditsRemaining: newCredits })
+      body: JSON.stringify({
+        reply,
+        creditsRemaining: updatedCredits
+      })
     };
   } catch (err) {
-    if (err.message === "HIGH_TRAFFIC") {
-      return {
-        statusCode: 503,
-        body: JSON.stringify({
-          error: "Zyntrix AI is busy right now. Your point was NOT deducted—please try again in 5 seconds."
-        })
-      };
-    }
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: err.message || "Unexpected server error" })
+    };
   }
-}
+};
