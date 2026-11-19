@@ -132,9 +132,8 @@
 
   <script>
     const SUPABASE_URL = "https://ddqodzfdazjedojbtnjl.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcW9kemZkYXpqZWRvamJ0bmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDB9.EXAMPLE_ANON_KEY_PLACEHOLDER";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KJhgff5UE46zrNgLmGAmw_VTSwa...";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
     let currentSession = null;
     let currentWorkflowType = "Custom Workflow";
     let rawOutputText = "";
