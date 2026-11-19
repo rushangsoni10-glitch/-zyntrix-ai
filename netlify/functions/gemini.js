@@ -1,22 +1,22 @@
-const { createClient } = require("@supabase/supabase-js");
-
 exports.handler = async function (event) {
+  const jsonHeaders = { "Content-Type": "application/json" };
+
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: "Method Not Allowed" })
     };
   }
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const supabaseUrl = process.env.SUPABASE_URL || "https://ddqodzfdazjedojbtnjl.supabase.co";
+  const supabaseUrl = (process.env.SUPABASE_URL || "https://ddqodzfdazjedojbtnjl.supabase.co").replace(/\/+$/, "");
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
   if (!geminiKey) {
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: "GEMINI_API_KEY is missing in Netlify Environment Variables." })
     };
   }
@@ -24,8 +24,8 @@ exports.handler = async function (event) {
   if (!supabaseServiceKey) {
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Supabase service/secret key is missing in Netlify Environment Variables." })
+      headers: jsonHeaders,
+      body: JSON.stringify({ error: "SUPABASE_SERVICE_ROLE_KEY is missing in Netlify Environment Variables." })
     };
   }
 
@@ -35,45 +35,58 @@ exports.handler = async function (event) {
   if (!token) {
     return {
       statusCode: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: "Please sign in first to run workflows." })
     };
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  const sbHeaders = {
+    "apikey": supabaseServiceKey,
+    "Authorization": `Bearer ${supabaseServiceKey}`,
+    "Content-Type": "application/json"
+  };
 
   try {
-    const { data: userData, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !userData?.user) {
+    // 1. Verify the logged-in user via Supabase Auth REST API
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!userRes.ok) {
       return {
         statusCode: 401,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Session expired. Please log in again." })
+        headers: jsonHeaders,
+        body: JSON.stringify({ error: "Session expired or invalid. Please log out and log in again." })
       };
     }
 
-    const userId = userData.user.id;
-    const { prompt, workflowType = "Custom Workflow" } = JSON.parse(event.body || "{}");
+    const user = await userRes.json();
+    const userId = user.id;
 
+    const { prompt, workflowType = "Custom Workflow" } = JSON.parse(event.body || "{}");
     if (!prompt || !prompt.trim()) {
       return {
         statusCode: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders,
         body: JSON.stringify({ error: "Prompt is required." })
       };
     }
 
-    // Fetch user profile & credits
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("credits_remaining, brand_name, target_audience, brand_tone")
-      .eq("id", userId)
-      .single();
+    // 2. Fetch user profile & credits from Supabase REST API
+    const profileRes = await fetch(
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_remaining,brand_name,target_audience,brand_tone`,
+      { headers: sbHeaders }
+    );
+    const profiles = await profileRes.json();
+    const profile = Array.isArray(profiles) ? profiles[0] : null;
 
-    if (profileError || !profile) {
+    if (!profile) {
       return {
         statusCode: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders,
         body: JSON.stringify({ error: "User profile not found in database." })
       };
     }
@@ -81,12 +94,12 @@ exports.handler = async function (event) {
     if ((profile.credits_remaining ?? 0) < 1) {
       return {
         statusCode: 402,
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders,
         body: JSON.stringify({ error: "OUT_OF_CREDITS" })
       };
     }
 
-    // Build prompt with saved Brand Voice if available
+    // 3. Build prompt with saved Brand Voice
     const brandContext = [
       profile.brand_name ? `Brand Name: ${profile.brand_name}` : "",
       profile.target_audience ? `Target Audience: ${profile.target_audience}` : "",
@@ -99,51 +112,58 @@ exports.handler = async function (event) {
       ? `Follow this brand context:\n${brandContext}\n\nTask:\n${prompt.trim()}`
       : prompt.trim();
 
+    // 4. Call Google Gemini API
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: finalPrompt }] }]
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: data.error?.message || "Gemini API error" })
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: finalPrompt }] }]
+        })
+      }
+    );
+
+    const geminiData = await geminiRes.json();
+
+    if (!geminiRes.ok) {
+      return {
+        statusCode: geminiRes.status,
+        headers: jsonHeaders,
+        body: JSON.stringify({ error: geminiData.error?.message || "Gemini API error" })
       };
     }
 
     const reply =
-      data.candidates?.[0]?.content?.parts
+      geminiData.candidates?.[0]?.content?.parts
         ?.map((p) => p.text || "")
         .join("")
         .trim() || "No response generated.";
 
-    // Deduct 1 credit
+    // 5. Deduct 1 point in Supabase
     const updatedCredits = Math.max(0, (profile.credits_remaining ?? 0) - 1);
-    await supabaseAdmin
-      .from("profiles")
-      .update({ credits_remaining: updatedCredits })
-      .eq("id", userId);
+    await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+      method: "PATCH",
+      headers: sbHeaders,
+      body: JSON.stringify({ credits_remaining: updatedCredits })
+    });
 
-    // Save to history
-    await supabaseAdmin.from("generations").insert({
-      user_id: userId,
-      workflow_type: workflowType,
-      prompt: prompt.trim(),
-      output: reply
+    // 6. Save output to Saved History
+    await fetch(`${supabaseUrl}/rest/v1/generations`, {
+      method: "POST",
+      headers: sbHeaders,
+      body: JSON.stringify({
+        user_id: userId,
+        workflow_type: workflowType,
+        prompt: prompt.trim(),
+        output: reply
+      })
     });
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
       body: JSON.stringify({
         reply,
         creditsRemaining: updatedCredits
@@ -152,7 +172,7 @@ exports.handler = async function (event) {
   } catch (err) {
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: err.message || "Unexpected server error" })
     };
   }
