@@ -31,6 +31,7 @@ exports.handler = async function (event) {
 
   const authHeader = event.headers.authorization || event.headers.Authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  const clientApiKey = event.headers.apikey || event.headers["x-apikey"] || supabaseServiceKey;
 
   if (!token) {
     return {
@@ -50,16 +51,19 @@ exports.handler = async function (event) {
     // 1. Verify the logged-in user via Supabase Auth REST API
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: {
-        "apikey": supabaseServiceKey,
+        "apikey": clientApiKey,
         "Authorization": `Bearer ${token}`
       }
     });
 
     if (!userRes.ok) {
+      const errBody = await userRes.json().catch(() => ({}));
       return {
         statusCode: 401,
         headers: jsonHeaders,
-        body: JSON.stringify({ error: "Session expired or invalid. Please log out and log in again." })
+        body: JSON.stringify({
+          error: errBody.msg || errBody.message || "Session expired or invalid. Please log out and log in again."
+        })
       };
     }
 
@@ -75,7 +79,7 @@ exports.handler = async function (event) {
       };
     }
 
-    // 2. Fetch user profile & credits from Supabase REST API
+    // 2. Fetch user profile & credits
     const profileRes = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_remaining,brand_name,target_audience,brand_tone`,
       { headers: sbHeaders }
