@@ -1,287 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zyntrix — AI Business Execution Engine</title>
-  <meta name="description" content="Execute cold emails, WhatsApp sales closers, viral Reels, and smart variable campaigns with Zyntrix AI." />
-  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-
   <style>
     :root {
       --bg: #090d16;
-      --card: #111827;
-      --card-alt: #161f33;
-      --border: #243049;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
       --accent: #6366f1;
-      --accent-glow: rgba(99, 102, 241, 0.25);
-      --green: #10b981;
-      --text: #f8fafc;
-      --muted: #94a3b8;
+      --accent-hover: #4f46e5;
+      --danger: #ef4444;
+      --success: #10b981;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); line-height: 1.6; }
-
-    /* Navbar */
-    nav {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 24px; border-bottom: 1px solid var(--border);
-      background: rgba(13, 19, 34, 0.92); backdrop-filter: blur(8px);
-      position: sticky; top: 0; z-index: 20; flex-wrap: wrap; gap: 10px;
-    }
-    .logo { font-size: 1.35rem; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); text-decoration: none; }
     .logo span { color: var(--accent); }
-    .nav-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .badge {
-      background: #1e293b; border: 1px solid var(--border);
-      padding: 6px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
-    }
-    .roi-badge { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
-
-    /* Buttons */
-    button { cursor: pointer; border: none; border-radius: 8px; padding: 9px 15px; font-weight: 600; font-size: 0.88rem; transition: 0.2s; }
-    .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 14px var(--accent-glow); }
-    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { border-color: var(--accent); background: #1a2338; }
-    .btn-whatsapp { background: #25D366; color: #052e16; font-weight: 700; }
-    .btn-whatsapp:hover { opacity: 0.9; }
-    .btn-sm { padding: 6px 11px; font-size: 0.8rem; }
-
-    /* Grid Layout */
-    .layout {
-      display: grid; grid-template-columns: 280px 1fr;
-      max-width: 1340px; margin: 24px auto; gap: 22px; padding: 0 20px;
-    }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-
-    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-    h2 { font-size: 1.3rem; margin-bottom: 6px; }
-    h3 { font-size: 1.05rem; margin-bottom: 10px; }
-
-    /* Templates & Inputs */
-    .templates { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-    .chip { background: var(--card-alt); color: var(--text); border: 1px solid var(--border); padding: 7px 12px; border-radius: 8px; font-size: 0.82rem; }
-    .chip:hover { border-color: var(--accent); background: #1e293b; }
-
-    textarea, input, select {
-      width: 100%; background: #090d16; border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 11px 12px; font-size: 0.92rem;
-    }
-    textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent); }
-    textarea, select { margin-bottom: 12px; }
-
-    /* Smart Variable Auto-Filler Box */
-    #smart-vars-box {
-      display: none; margin-top: 16px; padding: 14px;
-      background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.35);
-      border-radius: 10px;
-    }
-    .vars-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 10px; }
-    .var-field label { display: block; font-size: 0.78rem; color: #a5b4fc; margin-bottom: 4px; font-weight: 600; }
-    .var-field input { margin-bottom: 0; padding: 8px 10px; font-size: 0.85rem; }
-
-    /* Output Area */
-    #output-box {
-      margin-top: 16px; background: #090d16; border: 1px solid var(--border);
-      border-radius: 10px; padding: 20px; min-height: 150px;
-    }
-    #output-box h1, #output-box h2, #output-box h3 { color: #a5b4fc; margin-top: 12px; margin-bottom: 6px; }
-    #output-box ul, #output-box ol { margin-left: 20px; margin-bottom: 10px; }
-    #output-box p { margin-bottom: 10px; }
-
-    /* Variant Remix Bar */
-    .remix-bar {
-      display: none; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
-    }
-    .remix-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
-
-    /* Direct Customer Action Bar */
-    .direct-send-bar {
-      display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center;
-      background: var(--card-alt); padding: 12px; border-radius: 10px; border: 1px solid var(--border);
-    }
-    .phone-input { max-width: 210px; margin-bottom: 0; padding: 8px 12px; font-size: 0.85rem; }
-
-    /* History */
-    .history-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.84rem; }
-    .history-item:hover { background: #1e293b; border-radius: 6px; }
-
-    /* Modals & Password Toggle */
-    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); align-items: center; justify-content: center; z-index: 50; }
-    .modal { background: var(--card); border: 1px solid var(--border); padding: 24px; border-radius: 14px; width: 92%; max-width: 420px; }
-    .input-group { margin-bottom: 12px; }
-    .password-wrapper { position: relative; display: flex; align-items: center; }
-    .password-wrapper input { padding-right: 68px; }
-    .toggle-pass-btn {
-      position: absolute; right: 8px; background: #1e293b; color: var(--text);
-      border: 1px solid var(--border); padding: 5px 10px; font-size: 0.78rem; border-radius: 6px;
-    }
+    .user-bar { display: flex; gap: 1rem; align-items: center; }
+    .badge { background: rgba(99, 102, 241, 0.1); color: var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(99, 102, 241, 0.2); }
+    button { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: var(--accent-hover); }
+    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.secondary:hover { background: var(--border); }
+    main { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; flex: 1; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .sidebar { background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; height: fit-content; }
+    .sidebar h3 { font-size: 1rem; margin-bottom: 0.75rem; color: var(--text); }
+    .history-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto; }
+    .history-item { padding: 0.65rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 0.375rem; font-size: 0.85rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-item:hover { border-color: var(--accent); }
+    .content-area { background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    h1 { font-size: 1.5rem; }
+    p.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+    .templates { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .template-chip { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); }
+    .template-chip:hover { border-color: var(--accent); color: var(--text); }
+    textarea { width: 100%; height: 120px; background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; color: var(--text); resize: vertical; font-size: 0.95rem; }
+    textarea:focus { outline: none; border-color: var(--accent); }
+    .output-box { background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; min-height: 150px; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; color: var(--text); }
+    .action-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    input[type="text"], input[type="password"], input[type="email"] { width: 100%; padding: 0.65rem; background: var(--bg); border: 1px solid var(--border); border-radius: 0.375rem; color: var(--text); margin-bottom: 0.75rem; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--border); padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 400px; }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation -->
-  <nav>
-    <div class="logo">Zyntrix<span>.ai</span></div>
-    <div class="nav-right">
-      <span id="roi-badge" class="badge roi-badge" style="display:none;">Saved: 0 mins (₹0)</span>
-      <span id="credits-badge" class="badge" style="display:none;">Points: 0</span>
-      <button id="brand-btn" class="btn-outline btn-sm" style="display:none;" onclick="openModal('brand-modal')">Brand Voice</button>
-      <button id="auth-btn" class="btn-primary" onclick="openModal('auth-modal')">Sign In / Start Free</button>
-      <button id="logout-btn" class="btn-outline btn-sm" style="display:none;" onclick="logout()">Logout</button>
+  <header>
+    <a href="#" class="logo">Zyntrix<span>.ai</span></a>
+    <div class="user-bar">
+      <div id="saved-timer" class="badge">Saved: 0 mins (₹0)</div>
+      <div id="points-badge" class="badge">Points: 5</div>
+      <button class="secondary" onclick="openModal('brand-modal')" id="brand-btn" style="display:none;">Brand Voice</button>
+      <button class="secondary" onclick="openModal('auth-modal')" id="login-btn">Sign In / Start</button>
+      <button class="secondary" onclick="logoutUser()" id="logout-btn" style="display:none;">Logout</button>
     </div>
-  </nav>
+  </header>
 
-  <!-- Main Workspace -->
-  <div class="layout">
-    <!-- Left Sidebar: Saved History -->
-    <aside class="panel">
+  <main>
+    <aside class="sidebar">
       <h3>Saved History</h3>
-      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">Click any past run to reload & edit.</p>
-      <div id="history-list">Log in to save and view your past workflows.</div>
+      <p class="subtitle" style="font-size:0.8rem; margin-bottom:0.75rem;">Click any past run to reload.</p>
+      <div class="history-list" id="history-list">
+        <div class="subtitle" style="font-size:0.85rem;">No saved runs yet.</div>
+      </div>
     </aside>
 
-    <!-- Right Main Panel: Execution Engine -->
-    <main class="panel">
-      <h2>AI Business Execution Engine</h2>
-      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:14px;">Generate, auto-fill customer details, remix tone, and send directly to leads.</p>
+    <section class="content-area">
+      <div>
+        <h1>AI Business Execution Engine</h1>
+        <p class="subtitle">Generate workflows, auto-fill customer details, and deploy instantly. (Tip: Press Enter to submit!)</p>
+      </div>
 
-      <!-- Quick Business Templates -->
       <div class="templates">
-        <button class="chip" onclick="useTemplate('WhatsApp Ghost-Lead Closer', 'Write a persuasive WhatsApp message for [Customer Name] who asked about [Product/Service] priced at [Price] and stopped replying. Include a limited-time bonus.')">WhatsApp Ghost-Lead Closer</button>
-        <button class="chip" onclick="useTemplate('Cold B2B Email', 'Write a short, high-converting cold email to [Client Name] at [Company Name] offering [Service] to solve [Pain Point].')">Cold B2B Email</button>
-        <button class="chip" onclick="useTemplate('Viral IG Reel Script', 'Write a 30-second high-retention Instagram Reel script about [Topic] for [Target Audience] with a strong 3-second hook and CTA.')">Viral IG Reel Script</button>
-        <button class="chip" onclick="useTemplate('Objection Killer', 'A customer named [Customer Name] says our price of [Price] is too expensive compared to competitors. Write 2 confident replies to close the deal.')">Price Objection Killer</button>
+        <div class="template-chip" onclick="setPrompt('Write a WhatsApp ghost-lead closer message offering a 10% discount for inactive client: ')">WhatsApp Ghost-Lead Closer</div>
+        <div class="template-chip" onclick="setPrompt('Write a cold B2B email offering automation services to a local business owner: ')">Cold B2B Email</div>
+        <div class="template-chip" onclick="setPrompt('Write a viral Instagram reel script about new product arrivals: ')">Viral IG Reel Script</div>
+        <div class="template-chip" onclick="setPrompt('Write a price objection killer response when a lead says your service is too expensive: ')">Price Objection Killer</div>
       </div>
 
-      <textarea id="prompt-input" rows="3" maxlength="4000" placeholder="Describe your task or use [Brackets] like [Customer Name] or [Price] for instant auto-fill..."></textarea>
-      
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <span id="queue-status" style="font-size:0.85rem; color:var(--green); font-weight:600;"></span>
-        <button id="run-btn" class="btn-primary" onclick="enqueueWorkflow()">Generate Workflow (1 Point)</button>
+      <textarea id="prompt-box" placeholder="Type your prompt here... (Press Enter to generate, Shift+Enter for new line)"></textarea>
+
+      <div class="action-row">
+        <button id="generate-btn" onclick="runWorkflow()">Generate Workflow (1 Point)</button>
+        <span id="status-msg" class="subtitle" style="font-size:0.85rem;"></span>
       </div>
 
-      <!-- UNIQUE FEATURE 1: Smart Placeholder Auto-Filler -->
-      <div id="smart-vars-box">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong style="font-size:0.88rem; color:#c7d2fe;">Smart Auto-Fill Detected</strong>
-          <span style="font-size:0.76rem; color:var(--muted);">Type below to auto-replace brackets in real time</span>
-        </div>
-        <div id="vars-grid" class="vars-grid"></div>
-      </div>
+      <div class="output-box" id="output-box">Your generated execution plan will appear here...</div>
 
-      <!-- AI Output Area -->
-      <div id="output-box">Your execution-ready workflow will appear here...</div>
+      <div class="action-row">
+        <input type="text" id="wa-phone" placeholder="Customer WhatsApp (e.g. 9198...)" style="max-width: 220px; margin-bottom: 0;">
+        <button onclick="sendWhatsApp()" style="background: var(--success);">Send to Customer on WhatsApp</button>
+        <button class="secondary" onclick="copyText()">Copy Text</button>
+        <button class="secondary" onclick="downloadTxt()">Download .txt</button>
+      </div>
+    </section>
+  </main>
 
-      <!-- UNIQUE FEATURE 2: 1-Click Variant Lab (Instant Tone Remix) -->
-      <div id="remix-bar" class="remix-bar">
-        <span class="remix-label">1-Click Remix:</span>
-        <button class="chip btn-sm" onclick="remixOutput('Rewrite this in natural, relatable Indian Hinglish suitable for social media or WhatsApp')">Hinglish Vibe</button>
-        <button class="chip btn-sm" onclick="remixOutput('Make this ultra-short and punchy under 60 words for fast mobile reading')">Short & Punchy</button>
-        <button class="chip btn-sm" onclick="remixOutput('Make this a high-urgency direct-response sales close with stronger FOMO')">High-Urgency Close</button>
+  <!-- Auth Modal -->
+  <div class="modal" id="auth-modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 1rem;">Welcome to Zyntrix</h3>
+      <input type="email" id="auth-email" placeholder="Email address">
+      <input type="password" id="auth-pass" placeholder="Password">
+      <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <button onclick="handleAuth('login')" style="flex:1;">Log In</button>
+        <button onclick="handleAuth('signup')" class="secondary" style="flex:1;">Sign Up</button>
       </div>
-
-      <!-- UNIQUE FEATURE 3: Direct-to-Customer WhatsApp Launcher & Export -->
-      <div class="direct-send-bar">
-        <input type="tel" id="customer-phone" class="phone-input" placeholder="Customer WhatsApp (e.g. 919876543210)" />
-        <button class="btn-whatsapp btn-sm" onclick="sendDirectWhatsApp()">Send to Customer on WhatsApp</button>
-        <button class="btn-outline btn-sm" onclick="copyOutput()">Copy Text</button>
-        <button class="btn-outline btn-sm" onclick="downloadTxt()">Download .txt</button>
-      </div>
-    </main>
-  </div>
-
-  <!-- Login / Signup Modal -->
-  <div id="auth-modal" class="modal-bg">
-    <div class="modal">
-      <h3>Welcome to Zyntrix</h3>
-      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:14px;">Create an account to get 5 free workflow points and save your history.</p>
-      <div class="input-group">
-        <input type="email" id="auth-email" placeholder="Enter your email" />
-      </div>
-      <div class="input-group">
-        <div class="password-wrapper">
-          <input type="password" id="auth-pass" placeholder="Enter password (min 6 chars)" />
-          <button type="button" id="toggle-pass-btn" class="toggle-pass-btn" onclick="togglePasswordVisibility()">Show</button>
-        </div>
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn-primary" style="flex:1;" onclick="handleAuth('login')">Log In</button>
-        <button class="btn-outline" style="flex:1;" onclick="handleAuth('signup')">Sign Up</button>
-      </div>
-      <p id="auth-msg" style="color:#f87171; font-size:0.85rem; margin-top:10px;"></p>
-      <button class="btn-outline" style="width:100%; margin-top:12px;" onclick="closeModal('auth-modal')">Close</button>
+      <p id="auth-msg" class="subtitle" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--danger);"></p>
+      <button class="secondary" onclick="closeModal('auth-modal')" style="width:100%; margin-top:1rem;">Close</button>
     </div>
   </div>
 
   <!-- Brand Voice Modal -->
-  <div id="brand-modal" class="modal-bg">
-    <div class="modal">
-      <h3>Your Brand Voice</h3>
-      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">Saved once and applied automatically to every AI output.</p>
-      <input type="text" id="brand-name" placeholder="Brand / Business Name (e.g., UrbanThreads India)" />
-      <input type="text" id="brand-audience" placeholder="Target Audience (e.g., Small business owners in India)" />
-      <select id="brand-tone">
-        <option value="Professional & Persuasive">Professional & Persuasive</option>
-        <option value="Casual Hinglish (Indian Social Media)">Casual Hinglish (Indian Social Media)</option>
-        <option value="Bold & Direct Response">Bold & Direct Response</option>
-        <option value="Friendly & Helpful">Friendly & Helpful</option>
-      </select>
-      <button class="btn-primary" style="width:100%;" onclick="saveBrandVoice()">Save Brand Voice</button>
-      <button class="btn-outline" style="width:100%; margin-top:8px;" onclick="closeModal('brand-modal')">Close</button>
+  <div class="modal" id="brand-modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 1rem;">Configure Brand Voice</h3>
+      <input type="text" id="brand-name" placeholder="Brand Name">
+      <input type="text" id="brand-audience" placeholder="Target Audience (e.g. D2C founders)">
+      <input type="text" id="brand-tone" placeholder="Tone (e.g. Direct, witty, professional)">
+      <button onclick="saveBrandVoice()" style="width:100%; margin-top:0.5rem;">Save Brand Voice</button>
+      <p id="brand-msg" class="subtitle" style="margin-top:0.5rem; font-size:0.85rem; color: var(--success);"></p>
+      <button class="secondary" onclick="closeModal('brand-modal')" style="width:100%; margin-top:1rem;">Close</button>
     </div>
   </div>
 
   <script>
+    // EDIT THIS LINE IF NEEDED WITH YOUR SUPABASE PUBLISHABLE KEY
     const SUPABASE_URL = "https://ddqodzfdazjedojbtnjl.supabase.co";
-    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_JKJhgff5UE46zrNgLMgAmw_VTSwaH_v";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Z2VuZXJhdGVkX2J5X3N1cGFiYXNlX2luXzIwMjZf";
+
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
     let currentSession = null;
-    let currentWorkflowType = "Custom Workflow";
-    let baseTemplateText = "";
-    let finalOutputText = "";
-    const taskQueue = [];
-    let isProcessing = false;
+    let localHistory = [];
 
-    function togglePasswordVisibility() {
-      const passInput = document.getElementById("auth-pass");
-      const toggleBtn = document.getElementById("toggle-pass-btn");
-      const isHidden = passInput.type === "password";
-      passInput.type = isHidden ? "text" : "password";
-      toggleBtn.innerText = isHidden ? "Hide" : "Show";
+    async function initAuth() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentSession = session;
+      updateUIForUser();
+      if (session) fetchHistory();
     }
 
     sb.auth.onAuthStateChange((_event, session) => {
       currentSession = session;
       updateUIForUser();
+      if (session) fetchHistory();
     });
 
-    async function updateUIForUser() {
-      const loggedIn = !!currentSession;
-      document.getElementById("auth-btn").style.display = loggedIn ? "none" : "inline-block";
-      document.getElementById("logout-btn").style.display = loggedIn ? "inline-block" : "none";
-      document.getElementById("credits-badge").style.display = loggedIn ? "inline-block" : "none";
-      document.getElementById("brand-btn").style.display = loggedIn ? "inline-block" : "none";
-      document.getElementById("roi-badge").style.display = loggedIn ? "inline-block" : "none";
+    initAuth();
 
-      if (loggedIn) {
-        const { data: profile } = await sb.from("profiles").select("*").eq("id", currentSession.user.id).single();
-        if (profile) {
-          document.getElementById("credits-badge").innerText = `Points: ${profile.credits_remaining}`;
-          document.getElementById("brand-name").value = profile.brand_name || "";
-          document.getElementById("brand-audience").value = profile.target_audience || "";
-          document.getElementById("brand-tone").value = profile.brand_tone || "Professional & Persuasive";
-        }
-        loadHistory();
+    function updateUIForUser() {
+      const loginBtn = document.getElementById("login-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const brandBtn = document.getElementById("brand-btn");
+      const pointsBadge = document.getElementById("points-badge");
+
+      if (currentSession) {
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        brandBtn.style.display = "inline-block";
+        fetchProfile();
       } else {
-        document.getElementById("history-list").innerText = "Log in to save and view your past workflows.";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        brandBtn.style.display = "none";
+        pointsBadge.innerText = "Points: 5";
+      }
+    }
+
+    async function fetchProfile() {
+      if (!currentSession) return;
+      const { data, error } = await sb.from("profiles").select("credits_remaining, brand_name, target_audience, brand_tone").eq("id", currentSession.user.id).single();
+      if (data) {
+        document.getElementById("points-badge").innerText = `Points: ${data.credits_remaining ?? 5}`;
+        document.getElementById("brand-name").value = data.brand_name || "";
+        document.getElementById("brand-audience").value = data.target_audience || "";
+        document.getElementById("brand-tone").value = data.brand_tone || "";
       }
     }
 
@@ -289,202 +189,178 @@
       const email = document.getElementById("auth-email").value.trim();
       const password = document.getElementById("auth-pass").value.trim();
       const msg = document.getElementById("auth-msg");
-      msg.innerText = "Please wait...";
+      msg.style.color = "var(--danger)";
 
-      const res = type === "signup"
-        ? await sb.auth.signUp({ email, password })
-        : await sb.auth.signInWithPassword({ email, password });
+      if (!email || !password) {
+        msg.innerText = "Please enter email and password.";
+        return;
+      }
 
-      if (res.error) {
-        msg.innerText = res.error.message;
+      if (type === "login") {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) msg.innerText = error.message;
+        else { closeModal("auth-modal"); msg.innerText = ""; }
       } else {
-        msg.innerText = "";
-        closeModal("auth-modal");
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) msg.innerText = error.message;
+        else {
+          msg.style.color = "var(--success)";
+          msg.innerText = "Account created! You can now log in.";
+        }
       }
     }
 
-    async function logout() {
+    async function logoutUser() {
       await sb.auth.signOut();
+      currentSession = null;
+      updateUIForUser();
+      document.getElementById("history-list").innerHTML = `<div class="subtitle" style="font-size:0.85rem;">No saved runs yet.</div>`;
     }
 
     async function saveBrandVoice() {
       if (!currentSession) return;
-      await sb.from("profiles").update({
-        brand_name: document.getElementById("brand-name").value,
-        target_audience: document.getElementById("brand-audience").value,
-        brand_tone: document.getElementById("brand-tone").value
-      }).eq("id", currentSession.user.id);
-      closeModal("brand-modal");
-      alert("Brand Voice saved!");
-    }
+      const brand_name = document.getElementById("brand-name").value;
+      const target_audience = document.getElementById("brand-audience").value;
+      const brand_tone = document.getElementById("brand-tone").value;
 
-    async function loadHistory() {
-      const { data } = await sb
-        .from("generations")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      const list = document.getElementById("history-list");
-      if (!data || data.length === 0) {
-        list.innerHTML = "<p style='font-size:0.85rem;color:#94a3b8;'>No saved runs yet.</p>";
-        updateROIBadge(0);
-        return;
+      const { error } = await sb.from("profiles").update({ brand_name, target_audience, brand_tone }).eq("id", currentSession.user.id);
+      const msg = document.getElementById("brand-msg");
+      if (error) msg.innerText = error.message;
+      else {
+        msg.innerText = "Brand voice saved successfully!";
+        setTimeout(() => closeModal("brand-modal"), 1500);
       }
-      updateROIBadge(data.length);
-      list.innerHTML = "";
-      data.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.innerHTML = `<strong>${item.workflow_type}</strong><br><span style="color:#94a3b8;">${item.prompt.slice(0, 45)}...</span>`;
-        div.onclick = () => initializeOutputWithVariables(item.output);
-        list.appendChild(div);
-      });
     }
 
-    function updateROIBadge(runCount) {
-      const minsSaved = runCount * 20;
-      const inrSaved = runCount * 350;
-      document.getElementById("roi-badge").innerText = `Saved: ${minsSaved} mins (₹${inrSaved.toLocaleString("en-IN")})`;
+    function setPrompt(text) {
+      document.getElementById("prompt-box").value = text;
+      document.getElementById("prompt-box").focus();
     }
 
-    function useTemplate(type, text) {
-      currentWorkflowType = type;
-      document.getElementById("prompt-input").value = text;
-    }
+    async function runWorkflow() {
+      const prompt = document.getElementById("prompt-box").value.trim();
+      const status = document.getElementById("status-msg");
+      const outputBox = document.getElementById("output-box");
 
-    function remixOutput(instruction) {
-      if (!finalOutputText) return;
-      const remixPrompt = `${instruction}:\n\n${finalOutputText}`;
-      document.getElementById("prompt-input").value = remixPrompt;
-      currentWorkflowType = "1-Click Remix";
-      enqueueWorkflow();
-    }
+      const { data: { session: freshSession } } = await sb.auth.getSession();
+      const activeSession = freshSession || currentSession;
 
-    function enqueueWorkflow() {
-      if (!currentSession) {
+      if (!activeSession) {
         openModal("auth-modal");
         return;
       }
-      const prompt = document.getElementById("prompt-input").value.trim();
-      if (!prompt) return alert("Please enter a prompt first.");
 
-      taskQueue.push({ prompt, workflowType: currentWorkflowType });
-      document.getElementById("queue-status").innerText = `In queue (${taskQueue.length})...`;
-      processQueue();
-    }
+      if (!prompt) {
+        status.innerText = "Please enter a prompt first.";
+        return;
+      }
 
-    async function processQueue() {
-      if (isProcessing || taskQueue.length === 0) return;
-      isProcessing = true;
-      const runBtn = document.getElementById("run-btn");
-      runBtn.disabled = true;
-
-      const task = taskQueue.shift();
-      document.getElementById("queue-status").innerText = "Executing workflow...";
+      status.innerText = "Executing workflow...";
+      outputBox.innerText = "Generating AI response...";
 
       try {
         const res = await fetch("/.netlify/functions/gemini", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentSession.access_token}`
+            "Authorization": `Bearer ${activeSession.access_token}`,
+            "apikey": SUPABASE_PUBLISHABLE_KEY
           },
-          body: JSON.stringify(task)
+          body: JSON.stringify({ prompt, workflowType: "Custom Workflow" })
         });
 
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Workflow failed");
 
-        if (res.status === 402 || data.error === "OUT_OF_CREDITS") {
-          alert("You have used all your free points! Upgrade to Pro to continue.");
-        } else if (!res.ok) {
-          renderMarkdown(`**Notice:** ${data.error}`);
-        } else {
-          initializeOutputWithVariables(data.reply);
-          document.getElementById("credits-badge").innerText = `Points: ${data.creditsRemaining}`;
-          loadHistory();
-        }
-      } catch (e) {
-        renderMarkdown(`**Error:** ${e.message}`);
-      } finally {
-        await new Promise((r) => setTimeout(r, 1500));
-        isProcessing = false;
-        runBtn.disabled = false;
-        document.getElementById("queue-status").innerText = taskQueue.length ? `In queue (${taskQueue.length})...` : "";
-        processQueue();
+        outputBox.innerText = data.reply;
+        document.getElementById("points-badge").innerText = `Points: ${data.creditsRemaining}`;
+        status.innerText = "Success!";
+        fetchHistory();
+      } catch (err) {
+        status.innerText = "";
+        outputBox.innerText = `Error: ${err.message}`;
       }
     }
 
-    // Detects [Bracketed Placeholders] and builds live auto-fill inputs
-    function initializeOutputWithVariables(rawMarkdown) {
-      baseTemplateText = rawMarkdown;
-      finalOutputText = rawMarkdown;
-      renderMarkdown(rawMarkdown);
-      document.getElementById("remix-bar").style.display = "flex";
-
-      const matches = [...new Set(rawMarkdown.match(/\[([^\[\]]{2,35})\]/g))];
-      const varsBox = document.getElementById("smart-vars-box");
-      const varsGrid = document.getElementById("vars-grid");
-      varsGrid.innerHTML = "";
-
-      if (matches.length > 0) {
-        varsBox.style.display = "block";
-        matches.forEach((token) => {
-          const cleanLabel = token.replace(/[\[\]]/g, "");
-          const field = document.createElement("div");
-          field.className = "var-field";
-          field.innerHTML = `<label>${cleanLabel}</label><input type="text" data-token="${token}" placeholder="Enter ${cleanLabel}..." oninput="applyVariableReplacements()" />`;
-          varsGrid.appendChild(field);
-        });
-      } else {
-        varsBox.style.display = "none";
+    async function fetchHistory() {
+      if (!currentSession) return;
+      const { data } = await sb.from("generations").select("*").eq("user_id", currentSession.user.id).order("created_at", { ascending: false }).limit(10);
+      if (data && data.length > 0) {
+        localHistory = data;
+        const list = document.getElementById("history-list");
+        list.innerHTML = data.map((item, idx) => `
+          <div class="history-item" onclick="loadHistoryItem(${idx})" title="${item.prompt}">
+            ${item.prompt}
+          </div>
+        `).join("");
       }
     }
 
-    function applyVariableReplacements() {
-      let updated = baseTemplateText;
-      document.querySelectorAll("#vars-grid input").forEach((input) => {
-        const val = input.value.trim();
-        if (val) {
-          const token = input.getAttribute("data-token");
-          updated = updated.split(token).join(val);
-        }
-      });
-      finalOutputText = updated;
-      renderMarkdown(updated);
-    }
-
-    function renderMarkdown(markdownText) {
-      const cleanHTML = DOMPurify.sanitize(marked.parse(markdownText));
-      document.getElementById("output-box").innerHTML = cleanHTML;
-    }
-
-    function sendDirectWhatsApp() {
-      if (!finalOutputText) return alert("Generate a message first!");
-      const rawPhone = document.getElementById("customer-phone").value.replace(/\D/g, "");
-      const url = rawPhone
-        ? `https://wa.me/${rawPhone}?text=${encodeURIComponent(finalOutputText)}`
-        : `https://wa.me/?text=${encodeURIComponent(finalOutputText)}`;
-      window.open(url, "_blank");
-    }
-
-    function copyOutput() {
-      if (!finalOutputText) return;
-      navigator.clipboard.writeText(finalOutputText);
-      alert("Copied ready-to-send text!");
-    }
-
-    function downloadTxt() {
-      if (!finalOutputText) return;
-      const blob = new Blob([finalOutputText], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "zyntrix-execution.txt";
-      a.click();
+    function loadHistoryItem(idx) {
+      const item = localHistory[idx];
+      if (item) {
+        document.getElementById("prompt-box").value = item.prompt;
+        document.getElementById("output-box").innerText = item.output;
+      }
     }
 
     function openModal(id) { document.getElementById(id).style.display = "flex"; }
     function closeModal(id) { document.getElementById(id).style.display = "none"; }
+
+    function copyText() {
+      navigator.clipboard.writeText(document.getElementById("output-box").innerText);
+      alert("Copied to clipboard!");
+    }
+
+    function downloadTxt() {
+      const text = document.getElementById("output-box").innerText;
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "zyntrix-workflow.txt";
+      a.click();
+    }
+
+    function sendWhatsApp() {
+      const phone = document.getElementById("wa-phone").value.trim();
+      const text = encodeURIComponent(document.getElementById("output-box").innerText);
+      if (!phone) { alert("Enter a customer WhatsApp number first."); return; }
+      window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+    }
+
+    // --- PRESS ENTER TO SUBMIT SHORTCUTS ---
+    document.getElementById("prompt-box")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        runWorkflow();
+      }
+    });
+
+    ["auth-email", "auth-pass"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleAuth("login");
+        }
+      });
+    });
+
+    ["brand-name", "brand-audience", "brand-tone"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          saveBrandVoice();
+        }
+      });
+    });
+
+    document.getElementById("wa-phone")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendWhatsApp();
+      }
+    });
   </script>
 </body>
 </html>
