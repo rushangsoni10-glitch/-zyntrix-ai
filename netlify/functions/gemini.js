@@ -10,7 +10,7 @@ exports.handler = async function (event) {
   }
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const supabaseUrl = (process.env.SUPABASE_URL || "https://ddqodzfdazjedojbtnjl.supabase.co").replace(/\/+$/, "");
+  const supabaseUrl = (process.env.SUPABASE_URL || "https://ddqodzfdazjedojbtnjl.supabase.co");
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
   if (!geminiKey) {
