@@ -1,366 +1,1238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zyntrix — AI Business Execution Engine</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zentrix AI — Intelligent Business Automation & Workflow Studio</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #111827;
-      --border: #1f2937;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
-      --danger: #ef4444;
+      --bg: #07090f;
+      --surface: #0e1320;
+      --surface-2: #141b2d;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(99, 102, 241, 0.45);
+      --text: #f3f6fc;
+      --muted: #98a4be;
+      --primary: #6366f1;
+      --primary-2: #22d3ee;
+      --accent: #a855f7;
       --success: #10b981;
+      --danger: #ef4444;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border); }
-    .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); text-decoration: none; }
-    .logo span { color: var(--accent); }
-    .user-bar { display: flex; gap: 1rem; align-items: center; }
-    .badge { background: rgba(99, 102, 241, 0.1); color: var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(99, 102, 241, 0.2); }
-    button { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: var(--accent-hover); }
-    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    button.secondary:hover { background: var(--border); }
-    main { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; flex: 1; }
-    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-    .sidebar { background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; height: fit-content; }
-    .sidebar h3 { font-size: 1rem; margin-bottom: 0.75rem; color: var(--text); }
-    .history-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto; }
-    .history-item { padding: 0.65rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 0.375rem; font-size: 0.85rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-item:hover { border-color: var(--accent); }
-    .content-area { background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
-    h1 { font-size: 1.5rem; }
-    p.subtitle { color: var(--text-muted); font-size: 0.9rem; }
-    .templates { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .template-chip { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); }
-    .template-chip:hover { border-color: var(--accent); color: var(--text); }
-    textarea { width: 100%; height: 120px; background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; color: var(--text); resize: vertical; font-size: 0.95rem; }
-    textarea:focus { outline: none; border-color: var(--accent); }
-    .output-box { background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; min-height: 150px; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; color: var(--text); }
-    .action-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-    input[type="text"], input[type="password"], input[type="email"] { width: 100%; padding: 0.65rem; background: var(--bg); border: 1px solid var(--border); border-radius: 0.375rem; color: var(--text); margin-bottom: 0.75rem; }
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
-    .modal-content { background: var(--card-bg); border: 1px solid var(--border); padding: 2rem; border-radius: 0.75rem; width: 100%; max-width: 400px; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.16), transparent 42%),
+                  radial-gradient(circle at 85% 12%, rgba(34, 211, 238, 0.12), transparent 38%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+
+    /* Navbar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(7, 9, 15, 0.8);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: #05070d;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.14);
+      border: 1px solid var(--border-strong);
+      font-size: 0.82rem;
+      color: #c7d2fe;
+      white-space: nowrap;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #4f46e5);
+      border: 1px solid rgba(129, 140, 248, 0.5);
+      color: #fff;
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.83rem;
+      border-radius: 8px;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 76px 0 54px;
+      text-align: center;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      color: #67e8f9;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 850;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      max-width: 880px;
+      margin: 0 auto 18px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #818cf8, #22d3ee, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1.12rem;
+      max-width: 680px;
+      margin: 0 auto 30px;
+    }
+
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 42px;
+    }
+
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-card strong {
+      display: block;
+      font-size: 1.35rem;
+      color: #fff;
+    }
+
+    .stat-card span {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    /* Section Headings */
+    section {
+      padding: 64px 0;
+    }
+
+    .section-head {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 40px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+    }
+
+    /* Workflow Selector Grid */
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .wf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+
+    .wf-card:hover {
+      border-color: rgba(129, 140, 248, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .wf-card.active {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.16), rgba(14, 19, 32, 0.96));
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+    }
+
+    .wf-icon {
+      font-size: 1.45rem;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+
+    .wf-card h3 {
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    .wf-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    /* Studio Workspace */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel-title h3 {
+      font-size: 1.12rem;
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.83rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 11px;
+      padding: 11px 13px;
+      font-size: 0.94rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: var(--primary);
+    }
+
+    textarea {
+      min-height: 138px;
+      resize: vertical;
+    }
+
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .chip:hover {
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .studio-footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .output-box {
+      margin-top: 18px;
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .output-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .output-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #outputContent {
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+      color: #e6ecf8;
+      min-height: 150px;
+    }
+
+    .status-msg {
+      margin-top: 10px;
+      font-size: 0.86rem;
+      color: #67e8f9;
+    }
+
+    .status-msg.error {
+      color: #fca5a5;
+    }
+
+    /* Sidebar Cards */
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 290px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 11px 13px;
+      cursor: pointer;
+    }
+
+    .history-item:hover {
+      border-color: var(--primary);
+    }
+
+    .history-item small {
+      display: block;
+      color: #818cf8;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .history-item p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* How It Works & Features */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .faq-list {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 16px 20px;
+    }
+
+    summary {
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    details p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    /* Auth Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 5, 10, 0.78);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 18px;
+      padding: 26px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal form {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    /* Giant Full-Width ZENTRIX AI Footer Banner */
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 48px;
+      background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.08));
+      overflow: hidden;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 28px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .giant-brand-wrap {
+      width: 100%;
+      padding: 10px 0 18px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .giant-brand-text {
+      display: block;
+      width: 100%;
+      font-size: clamp(3.6rem, 15.8vw, 17rem);
+      font-weight: 950;
+      line-height: 0.9;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(129, 140, 248, 0.55) 65%, rgba(34, 211, 238, 0.18) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    @media (max-width: 960px) {
+      .workflow-grid,
+      .steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .studio-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 620px) {
+      .nav-links {
+        display: none;
+      }
+      .workflow-grid,
+      .steps-grid,
+      .controls-row {
+        grid-template-columns: 1fr;
+      }
+      .giant-brand-text {
+        font-size: 14.5vw;
+      }
+    }
   </style>
 </head>
 <body>
 
+  <!-- Header -->
   <header>
-    <a href="#" class="logo">Zyntrix<span>.ai</span></a>
-    <div class="user-bar">
-      <div id="saved-timer" class="badge">Saved: 0 mins (₹0)</div>
-      <div id="points-badge" class="badge">Points: 5</div>
-      <button class="secondary" onclick="openModal('brand-modal')" id="brand-btn" style="display:none;">Brand Voice</button>
-      <button class="secondary" onclick="openModal('auth-modal')" id="login-btn">Sign In / Start</button>
-      <button class="secondary" onclick="logoutUser()" id="logout-btn" style="display:none;">Logout</button>
+    <div class="container nav">
+      <a href="#" class="brand">
+        <span class="brand-badge">Z</span>
+        <span>ZENTRIX AI</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#workflows">AI Workflows</a>
+        <a href="#studio">Live Studio</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <span class="pill" id="creditBadge">Credits: 10</span>
+        <span class="pill" id="userBadge" style="display:none;"></span>
+        <button class="btn btn-primary btn-sm" id="openAuthBtn">Sign In</button>
+        <button class="btn btn-sm" id="logoutBtn" style="display:none;">Logout</button>
+      </div>
     </div>
   </header>
 
-  <main>
-    <aside class="sidebar">
-      <h3>Saved History</h3>
-      <p class="subtitle" style="font-size:0.8rem; margin-bottom:0.75rem;">Click any past run to reload.</p>
-      <div class="history-list" id="history-list">
-        <div class="subtitle" style="font-size:0.85rem;">No saved runs yet.</div>
-      </div>
-    </aside>
-
-    <section class="content-area">
-      <div>
-        <h1>AI Business Execution Engine</h1>
-        <p class="subtitle">Generate workflows, auto-fill customer details, and deploy instantly. (Tip: Press Enter to submit!)</p>
-      </div>
-
-      <div class="templates">
-        <div class="template-chip" onclick="setPrompt('Write a WhatsApp ghost-lead closer message offering a 10% discount for inactive client: ')">WhatsApp Ghost-Lead Closer</div>
-        <div class="template-chip" onclick="setPrompt('Write a cold B2B email offering automation services to a local business owner: ')">Cold B2B Email</div>
-        <div class="template-chip" onclick="setPrompt('Write a viral Instagram reel script about new product arrivals: ')">Viral IG Reel Script</div>
-        <div class="template-chip" onclick="setPrompt('Write a price objection killer response when a lead says your service is too expensive: ')">Price Objection Killer</div>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-tag">⚡ Powered by Gemini 3.8 Flash • Instant Business Automation</div>
+      <h1>Automate Your Entire <span class="gradient-text">Business Workflow</span> in Seconds</h1>
+      <p>
+        Turn rough ideas into high-converting sales emails, viral hooks, standard operating procedures,
+        customer replies, and landing page copy—tailored to your exact Brand Voice.
+      </p>
+      <div class="hero-cta">
+        <a href="#studio" class="btn btn-primary">Launch AI Studio →</a>
+        <a href="#workflows" class="btn">Explore 6 AI Tools</a>
       </div>
 
-      <textarea id="prompt-box" placeholder="Type your prompt here... (Press Enter to generate, Shift+Enter for new line)"></textarea>
+      <div class="stats-strip">
+        <div class="stat-card">
+          <strong>6+</strong>
+          <span>Specialized AI Workflows</span>
+        </div>
+        <div class="stat-card">
+          <strong>&lt; 2s</strong>
+          <span>Gemini 3.8 Flash Speed</span>
+        </div>
+        <div class="stat-card">
+          <strong>100%</strong>
+          <span>Custom Brand Voice Memory</span>
+        </div>
+        <div class="stat-card">
+          <strong>24/7</strong>
+          <span>Cloud History & Export</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-      <div class="action-row">
-        <button id="generate-btn" onclick="runWorkflow()">Generate Workflow (1 Point)</button>
-        <span id="status-msg" class="subtitle" style="font-size:0.85rem;"></span>
+  <!-- AI Workflow Selector -->
+  <section id="workflows">
+    <div class="container">
+      <div class="section-head">
+        <h2>Choose Your AI Automation Workflow</h2>
+        <p>Click any specialized tool below to load its tailored prompt engine into the Zentrix Studio.</p>
       </div>
 
-      <div class="output-box" id="output-box">Your generated execution plan will appear here...</div>
+      <div class="workflow-grid" id="workflowGrid">
+        <div class="wf-card active" data-workflow="Cold Sales & Outreach Email" data-placeholder="Describe your product, target customer, and desired call-to-action...">
+          <span class="wf-icon">✉️</span>
+          <h3>Cold Sales & Outreach</h3>
+          <p>High-reply B2B & B2C cold emails with personalized hooks and clear CTAs.</p>
+        </div>
 
-      <div class="action-row">
-        <input type="text" id="wa-phone" placeholder="Customer WhatsApp (e.g. 9198...)" style="max-width: 220px; margin-bottom: 0;">
-        <button onclick="sendWhatsApp()" style="background: var(--success);">Send to Customer on WhatsApp</button>
-        <button class="secondary" onclick="copyText()">Copy Text</button>
-        <button class="secondary" onclick="downloadTxt()">Download .txt</button>
+        <div class="wf-card" data-workflow="Viral Social & Content Hook Studio" data-placeholder="Enter your niche, topic, or video idea to generate 10 scroll-stopping hooks + script...">
+          <span class="wf-icon">🚀</span>
+          <h3>Viral Social & Hooks</h3>
+          <p>Scroll-stopping Reels/Shorts hooks, LinkedIn posts, and X threads.</p>
+        </div>
+
+        <div class="wf-card" data-workflow="High-Converting Offer & Landing Copy" data-placeholder="Share your offer name, price, key benefits, and target audience...">
+          <span class="wf-icon">💎</span>
+          <h3>Landing Page & Offer Copy</h3>
+          <p>Hero headlines, benefit bullets, objection handlers, and closing sections.</p>
+        </div>
+
+        <div class="wf-card" data-workflow="SOP & Team Process Builder" data-placeholder="Describe the task or business process you want turned into a step-by-step SOP...">
+          <span class="wf-icon">📋</span>
+          <h3>SOP & Process Builder</h3>
+          <p>Clean, repeatable Standard Operating Procedures and checklists for your team.</p>
+        </div>
+
+        <div class="wf-card" data-workflow="Customer Support & Review Responder" data-placeholder="Paste the customer message, question, or review you want to reply to...">
+          <span class="wf-icon">💬</span>
+          <h3>Smart Customer Responder</h3>
+          <p>Empathetic, brand-safe replies that resolve issues and retain customers.</p>
+        </div>
+
+        <div class="wf-card" data-workflow="Business Strategy & Growth Plan" data-placeholder="Describe your business stage, monthly goal, and biggest bottleneck...">
+          <span class="wf-icon">📈</span>
+          <h3>90-Day Growth Strategist</h3>
+          <p>Actionable marketing, pricing, and customer acquisition roadmaps.</p>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+
+  <!-- Live AI Studio -->
+  <section id="studio">
+    <div class="container">
+      <div class="section-head">
+        <h2>Zentrix AI Command Studio</h2>
+        <p>Configure tone, length, and your saved Brand Voice—then press <strong>Enter</strong> to generate.</p>
+      </div>
+
+      <div class="studio-grid">
+        <!-- Main Generator -->
+        <div class="panel">
+          <div class="panel-title">
+            <h3 id="activeWorkflowTitle">✉️ Cold Sales & Outreach Email</h3>
+            <span class="pill">Model: gemini-3.8-flash</span>
+          </div>
+
+          <div class="controls-row">
+            <div>
+              <label for="toneSelect">Tone of Voice</label>
+              <select id="toneSelect">
+                <option value="Professional & Persuasive">Professional & Persuasive</option>
+                <option value="Bold & Direct">Bold & Direct</option>
+                <option value="Friendly & Conversational">Friendly & Conversational</option>
+                <option value="Executive & Analytical">Executive & Analytical</option>
+                <option value="High-Energy & Viral">High-Energy & Viral</option>
+              </select>
+            </div>
+            <div>
+              <label for="lengthSelect">Output Length</label>
+              <select id="lengthSelect">
+                <option value="Short & Punchy">Short & Punchy</option>
+                <option value="Medium (Balanced)" selected>Medium (Balanced)</option>
+                <option value="Detailed & Comprehensive">Detailed & Comprehensive</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="promptInput">Your Task / Prompt (Press Enter to Run, Shift+Enter for New Line)</label>
+          <textarea id="promptInput" placeholder="Describe your product, target customer, and desired call-to-action..."></textarea>
+
+          <div class="quick-prompts">
+            <button type="button" class="chip" data-sample="Write a 3-step cold email sequence pitching AI automation services to dental clinic owners to save 10 hours/week.">Sample: Dental Clinic Pitch</button>
+            <button type="button" class="chip" data-sample="Create 7 viral YouTube Shorts & Instagram Reels hooks about how small business owners can automate customer follow-ups.">Sample: 7 Viral Hooks</button>
+            <button type="button" class="chip" data-sample="Build a step-by-step onboarding SOP for new e-commerce clients from payment to launch.">Sample: Client Onboarding SOP</button>
+          </div>
+
+          <div class="studio-footer-bar">
+            <span class="hint">Tip: Press <strong>Enter</strong> anytime inside the prompt box to generate.</span>
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="btn btn-sm" id="clearPromptBtn">Clear</button>
+              <button type="button" class="btn btn-primary" id="generateBtn">⚡ Generate Output</button>
+            </div>
+          </div>
+
+          <div class="status-msg" id="statusMsg"></div>
+
+          <div class="output-box">
+            <div class="output-toolbar">
+              <strong style="font-size:0.9rem;">Generated Result</strong>
+              <div class="output-actions">
+                <button type="button" class="btn btn-sm" id="copyOutputBtn">Copy</button>
+                <button type="button" class="btn btn-sm" id="downloadOutputBtn">Download .txt</button>
+                <button type="button" class="btn btn-sm" id="regenerateBtn">Regenerate</button>
+              </div>
+            </div>
+            <div id="outputContent">Your AI-generated business output will appear here...</div>
+          </div>
+        </div>
+
+        <!-- Right Sidebar: Brand Voice + Recent Generations -->
+        <div class="stack">
+          <div class="panel">
+            <div class="panel-title">
+              <h3>🎯 Custom Brand Voice</h3>
+              <span class="hint">Press Enter to save</span>
+            </div>
+            <label for="brandVoiceInput">Describe your company, audience & style</label>
+            <input
+              type="text"
+              id="brandVoiceInput"
+              placeholder="e.g. Zentrix AI — modern, confident, clear, zero jargon"
+            />
+            <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+              <span class="hint" id="brandSavedStatus">Saved locally & synced when logged in</span>
+              <button type="button" class="btn btn-sm btn-primary" id="saveBrandBtn">Save Voice</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              <h3>🕒 Recent Workflow History</h3>
+              <button type="button" class="btn btn-sm" id="clearHistoryBtn">Clear</button>
+            </div>
+            <div class="history-list" id="historyList">
+              <p class="hint">Your recent generations will appear here for one-click reload.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="section-head">
+        <h2>Built for Speed & Real Business Execution</h2>
+        <p>Three simple steps from raw idea to polished business assets.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>Pick a Specialized Workflow</h3>
+          <p style="color:var(--muted); margin-top:6px;">Select from outreach, social hooks, landing copy, SOPs, support replies, or growth planning.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>Lock In Your Brand Voice</h3>
+          <p style="color:var(--muted); margin-top:6px;">Set your tone, output length, and Brand Voice once so every result sounds unmistakably like you.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>Generate, Copy & Deploy</h3>
+          <p style="color:var(--muted); margin-top:6px;">Hit Enter to generate with Gemini 3.8 Flash, copy in one click, or download directly to `.txt`.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about running workflows on Zentrix AI.</p>
+      </div>
+      <div class="faq-list">
+        <details open>
+          <summary>Which AI model powers Zentrix AI?</summary>
+          <p>Zentrix AI runs on Google's <strong>gemini-3.8-flash</strong> engine via secure serverless functions, keeping your API keys hidden while delivering fast, structured outputs.</p>
+        </details>
+        <details>
+          <summary>How does Brand Voice work?</summary>
+          <p>Any guidelines you save in the Custom Brand Voice box are automatically injected into every workflow prompt so emails, hooks, and SOPs stay consistent across your team.</p>
+        </details>
+        <details>
+          <summary>Can I export or reuse previous generations?</summary>
+          <p>Yes—every generation is saved in your Recent Workflow History panel for one-click reloading, instant clipboard copy, or `.txt` file download.</p>
+        </details>
+      </div>
+    </div>
+  </section>
 
   <!-- Auth Modal -->
-  <div class="modal" id="auth-modal">
-    <div class="modal-content">
-      <h3 style="margin-bottom: 1rem;">Welcome to Zyntrix</h3>
-      <input type="email" id="auth-email" placeholder="Email address">
-      <input type="password" id="auth-pass" placeholder="Password">
-      <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-        <button onclick="handleAuth('login')" style="flex:1;">Log In</button>
-        <button onclick="handleAuth('signup')" class="secondary" style="flex:1;">Sign Up</button>
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="authModalTitle">Sign In to Zentrix AI</h3>
+        <button type="button" class="btn btn-sm" id="closeAuthBtn">✕</button>
       </div>
-      <p id="auth-msg" class="subtitle" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--danger);"></p>
-      <button class="secondary" onclick="closeModal('auth-modal')" style="width:100%; margin-top:1rem;">Close</button>
+      <form id="authForm">
+        <div>
+          <label for="authEmail">Email Address</label>
+          <input type="email" id="authEmail" required placeholder="you@company.com" />
+        </div>
+        <div>
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" required placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary" id="authSubmitBtn">Sign In</button>
+        <button type="button" class="btn btn-sm" id="toggleAuthModeBtn">Need an account? Create one</button>
+        <div class="status-msg" id="authStatus"></div>
+      </form>
     </div>
   </div>
 
-  <!-- Brand Voice Modal -->
-  <div class="modal" id="brand-modal">
-    <div class="modal-content">
-      <h3 style="margin-bottom: 1rem;">Configure Brand Voice</h3>
-      <input type="text" id="brand-name" placeholder="Brand Name">
-      <input type="text" id="brand-audience" placeholder="Target Audience (e.g. D2C founders)">
-      <input type="text" id="brand-tone" placeholder="Tone (e.g. Direct, witty, professional)">
-      <button onclick="saveBrandVoice()" style="width:100%; margin-top:0.5rem;">Save Brand Voice</button>
-      <p id="brand-msg" class="subtitle" style="margin-top:0.5rem; font-size:0.85rem; color: var(--success);"></p>
-      <button class="secondary" onclick="closeModal('brand-modal')" style="width:100%; margin-top:1rem;">Close</button>
+  <!-- Footer with Giant Full-Width ZENTRIX AI Branding -->
+  <footer>
+    <div class="container footer-top">
+      <div><strong>ZENTRIX AI</strong> — Intelligent Business Automation SaaS</div>
+      <div>© 2026 Zentrix AI. All rights reserved.</div>
     </div>
-  </div>
+    <div class="giant-brand-wrap">
+      <span class="giant-brand-text">ZENTRIX AI</span>
+    </div>
+  </footer>
 
   <script>
-    // EDIT THIS LINE IF NEEDED WITH YOUR SUPABASE PUBLISHABLE KEY
+    // ==========================================
+    // 1. SUPABASE CONFIGURATION
+    // ==========================================
     const SUPABASE_URL = "https://ddqodzfdazjedojbtnjl.supabase.co";
-    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_JKJhgff5UE46zrNgLMgAmw_VTSwaH_v";
+    // Replace with your real Supabase publishable key (sb_publishable_...)
+    const SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const supabaseClient =
+      window.supabase && SUPABASE_PUBLISHABLE_KEY.startsWith("sb_")
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+        : null;
+
+    // ==========================================
+    // 2. STATE & ELEMENTS
+    // ==========================================
+    let selectedWorkflow = "Cold Sales & Outreach Email";
+    let isSignUpMode = false;
     let currentSession = null;
-    let localHistory = [];
 
-    async function initAuth() {
-      const { data: { session } } = await sb.auth.getSession();
-      currentSession = session;
-      updateUIForUser();
-      if (session) fetchHistory();
-    }
+    const promptInput = document.getElementById("promptInput");
+    const toneSelect = document.getElementById("toneSelect");
+    const lengthSelect = document.getElementById("lengthSelect");
+    const generateBtn = document.getElementById("generateBtn");
+    const statusMsg = document.getElementById("statusMsg");
+    const outputContent = document.getElementById("outputContent");
+    const brandVoiceInput = document.getElementById("brandVoiceInput");
+    const historyList = document.getElementById("historyList");
 
-    sb.auth.onAuthStateChange((_event, session) => {
-      currentSession = session;
-      updateUIForUser();
-      if (session) fetchHistory();
+    // Load saved Brand Voice & History from localStorage
+    brandVoiceInput.value = localStorage.getItem("zentrix_brand_voice") || "";
+    renderHistory();
+
+    // ==========================================
+    // 3. WORKFLOW CARD SELECTION & SAMPLE CHIPS
+    // ==========================================
+    document.querySelectorAll(".wf-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".wf-card").forEach((c) => c.classList.remove("active"));
+        card.classList.add("active");
+        selectedWorkflow = card.dataset.workflow;
+        const icon = card.querySelector(".wf-icon").textContent;
+        document.getElementById("activeWorkflowTitle").textContent = `${icon} ${selectedWorkflow}`;
+        promptInput.placeholder = card.dataset.placeholder;
+        document.getElementById("studio").scrollIntoView({ behavior: "smooth" });
+      });
     });
 
-    initAuth();
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        promptInput.value = chip.dataset.sample;
+        promptInput.focus();
+      });
+    });
 
-    function updateUIForUser() {
-      const loginBtn = document.getElementById("login-btn");
-      const logoutBtn = document.getElementById("logout-btn");
-      const brandBtn = document.getElementById("brand-btn");
-      const pointsBadge = document.getElementById("points-badge");
+    document.getElementById("clearPromptBtn").addEventListener("click", () => {
+      promptInput.value = "";
+      promptInput.focus();
+    });
 
-      if (currentSession) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        brandBtn.style.display = "inline-block";
-        fetchProfile();
-      } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        brandBtn.style.display = "none";
-        pointsBadge.innerText = "Points: 5";
+    // ==========================================
+    // 4. BRAND VOICE SAVE (BUTTON + ENTER KEY)
+    // ==========================================
+    function saveBrandVoice() {
+      const val = brandVoiceInput.value.trim();
+      localStorage.setItem("zentrix_brand_voice", val);
+      const badge = document.getElementById("brandSavedStatus");
+      badge.textContent = "✓ Brand Voice saved!";
+      setTimeout(() => {
+        badge.textContent = "Saved locally & synced when logged in";
+      }, 2500);
+    }
+
+    document.getElementById("saveBrandBtn").addEventListener("click", saveBrandVoice);
+    brandVoiceInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveBrandVoice();
       }
-    }
+    });
 
-    async function fetchProfile() {
-      if (!currentSession) return;
-      const { data, error } = await sb.from("profiles").select("credits_remaining, brand_name, target_audience, brand_tone").eq("id", currentSession.user.id).single();
-      if (data) {
-        document.getElementById("points-badge").innerText = `Points: ${data.credits_remaining ?? 5}`;
-        document.getElementById("brand-name").value = data.brand_name || "";
-        document.getElementById("brand-audience").value = data.target_audience || "";
-        document.getElementById("brand-tone").value = data.brand_tone || "";
-      }
-    }
-
-    async function handleAuth(type) {
-      const email = document.getElementById("auth-email").value.trim();
-      const password = document.getElementById("auth-pass").value.trim();
-      const msg = document.getElementById("auth-msg");
-      msg.style.color = "var(--danger)";
-
-      if (!email || !password) {
-        msg.innerText = "Please enter email and password.";
-        return;
-      }
-
-      if (type === "login") {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) msg.innerText = error.message;
-        else { closeModal("auth-modal"); msg.innerText = ""; }
-      } else {
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) msg.innerText = error.message;
-        else {
-          msg.style.color = "var(--success)";
-          msg.innerText = "Account created! You can now log in.";
-        }
-      }
-    }
-
-    async function logoutUser() {
-      await sb.auth.signOut();
-      currentSession = null;
-      updateUIForUser();
-      document.getElementById("history-list").innerHTML = `<div class="subtitle" style="font-size:0.85rem;">No saved runs yet.</div>`;
-    }
-
-    async function saveBrandVoice() {
-      if (!currentSession) return;
-      const brand_name = document.getElementById("brand-name").value;
-      const target_audience = document.getElementById("brand-audience").value;
-      const brand_tone = document.getElementById("brand-tone").value;
-
-      const { error } = await sb.from("profiles").update({ brand_name, target_audience, brand_tone }).eq("id", currentSession.user.id);
-      const msg = document.getElementById("brand-msg");
-      if (error) msg.innerText = error.message;
-      else {
-        msg.innerText = "Brand voice saved successfully!";
-        setTimeout(() => closeModal("brand-modal"), 1500);
-      }
-    }
-
-    function setPrompt(text) {
-      document.getElementById("prompt-box").value = text;
-      document.getElementById("prompt-box").focus();
-    }
-
+    // ==========================================
+    // 5. RUN AI WORKFLOW (/api/gemini) + ENTER KEY
+    // ==========================================
     async function runWorkflow() {
-      const prompt = document.getElementById("prompt-box").value.trim();
-      const status = document.getElementById("status-msg");
-      const outputBox = document.getElementById("output-box");
-
-      const { data: { session: freshSession } } = await sb.auth.getSession();
-      const activeSession = freshSession || currentSession;
-
-      if (!activeSession) {
-        openModal("auth-modal");
-        return;
-      }
-
+      const prompt = promptInput.value.trim();
       if (!prompt) {
-        status.innerText = "Please enter a prompt first.";
+        setStatus("Please enter a prompt or pick a sample chip first.", true);
+        promptInput.focus();
         return;
       }
 
-      status.innerText = "Executing workflow...";
-      outputBox.innerText = "Generating AI response...";
+      if (!currentSession) {
+        setStatus("Please sign in to run AI workflows.", true);
+        openAuthModal();
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+      setStatus("Running workflow on Gemini 3.8 Flash...", false);
 
       try {
-        const res = await fetch("/.netlify/functions/gemini", {
+        const res = await fetch("/api/gemini", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${activeSession.access_token}`,
-            "apikey": SUPABASE_PUBLISHABLE_KEY
+            Authorization: `Bearer ${currentSession.access_token}`,
           },
-          body: JSON.stringify({ prompt, workflowType: "Custom Workflow" })
+          body: JSON.stringify({
+            prompt,
+            workflow: selectedWorkflow,
+            tone: toneSelect.value,
+            length: lengthSelect.value,
+            brandVoice: brandVoiceInput.value.trim(),
+          }),
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Workflow failed");
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to generate output.");
+        }
 
-        outputBox.innerText = data.reply;
-        document.getElementById("points-badge").innerText = `Points: ${data.creditsRemaining}`;
-        status.innerText = "Success!";
-        fetchHistory();
+        const resultText = data.result || data.output || data.text || "";
+        outputContent.textContent = resultText;
+        setStatus("✓ Workflow completed successfully.", false);
+        saveHistoryItem(selectedWorkflow, prompt, resultText);
       } catch (err) {
-        status.innerText = "";
-        outputBox.innerText = `Error: ${err.message}`;
+        setStatus(`Error: ${err.message}`, true);
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = "⚡ Generate Output";
       }
     }
 
-    async function fetchHistory() {
-      if (!currentSession) return;
-      const { data } = await sb.from("generations").select("*").eq("user_id", currentSession.user.id).order("created_at", { ascending: false }).limit(10);
-      if (data && data.length > 0) {
-        localHistory = data;
-        const list = document.getElementById("history-list");
-        list.innerHTML = data.map((item, idx) => `
-          <div class="history-item" onclick="loadHistoryItem(${idx})" title="${item.prompt}">
-            ${item.prompt}
-          </div>
-        `).join("");
-      }
-    }
+    generateBtn.addEventListener("click", runWorkflow);
+    document.getElementById("regenerateBtn").addEventListener("click", runWorkflow);
 
-    function loadHistoryItem(idx) {
-      const item = localHistory[idx];
-      if (item) {
-        document.getElementById("prompt-box").value = item.prompt;
-        document.getElementById("output-box").innerText = item.output;
-      }
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = "flex"; }
-    function closeModal(id) { document.getElementById(id).style.display = "none"; }
-
-    function copyText() {
-      navigator.clipboard.writeText(document.getElementById("output-box").innerText);
-      alert("Copied to clipboard!");
-    }
-
-    function downloadTxt() {
-      const text = document.getElementById("output-box").innerText;
-      const blob = new Blob([text], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "zyntrix-workflow.txt";
-      a.click();
-    }
-
-    function sendWhatsApp() {
-      const phone = document.getElementById("wa-phone").value.trim();
-      const text = encodeURIComponent(document.getElementById("output-box").innerText);
-      if (!phone) { alert("Enter a customer WhatsApp number first."); return; }
-      window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
-    }
-
-    // --- PRESS ENTER TO SUBMIT SHORTCUTS ---
-    document.getElementById("prompt-box")?.addEventListener("keydown", (e) => {
+    // Enter submits workflow; Shift+Enter adds newline
+    promptInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         runWorkflow();
       }
     });
 
-    ["auth-email", "auth-pass"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          handleAuth("login");
-        }
-      });
+    function setStatus(msg, isError) {
+      statusMsg.textContent = msg;
+      statusMsg.className = isError ? "status-msg error" : "status-msg";
+    }
+
+    // ==========================================
+    // 6. COPY, DOWNLOAD & HISTORY
+    // ==========================================
+    document.getElementById("copyOutputBtn").addEventListener("click", async () => {
+      const text = outputContent.textContent;
+      if (!text || text.startsWith("Your AI-generated")) return;
+      await navigator.clipboard.writeText(text);
+      setStatus("✓ Copied output to clipboard!", false);
     });
 
-    ["brand-name", "brand-audience", "brand-tone"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          saveBrandVoice();
-        }
-      });
+    document.getElementById("downloadOutputBtn").addEventListener("click", () => {
+      const text = outputContent.textContent;
+      if (!text || text.startsWith("Your AI-generated")) return;
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `zentrix-${selectedWorkflow.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
     });
 
-    document.getElementById("wa-phone")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        sendWhatsApp();
+    function saveHistoryItem(workflow, prompt, output) {
+      const items = JSON.parse(localStorage.getItem("zentrix_history") || "[]");
+      items.unshift({ workflow, prompt, output, ts: Date.now() });
+      localStorage.setItem("zentrix_history", JSON.stringify(items.slice(0, 12)));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const items = JSON.parse(localStorage.getItem("zentrix_history") || "[]");
+      if (!items.length) {
+        historyList.innerHTML = `<p class="hint">Your recent generations will appear here for one-click reload.</p>`;
+        return;
+      }
+      historyList.innerHTML = "";
+      items.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<small>${item.workflow}</small><p>${item.prompt}</p>`;
+        div.addEventListener("click", () => {
+          promptInput.value = item.prompt;
+          outputContent.textContent = item.output;
+          setStatus("Loaded from recent history.", false);
+        });
+        historyList.appendChild(div);
+      });
+    }
+
+    document.getElementById("clearHistoryBtn").addEventListener("click", () => {
+      localStorage.removeItem("zentrix_history");
+      renderHistory();
+    });
+
+    // ==========================================
+    // 7. SUPABASE AUTHENTICATION (WITH ENTER KEY)
+    // ==========================================
+    const authModal = document.getElementById("authModal");
+    const authForm = document.getElementById("authForm");
+    const authStatus = document.getElementById("authStatus");
+
+    function openAuthModal() {
+      authModal.classList.add("open");
+      document.getElementById("authEmail").focus();
+    }
+
+    document.getElementById("openAuthBtn").addEventListener("click", openAuthModal);
+    document.getElementById("closeAuthBtn").addEventListener("click", () => {
+      authModal.classList.remove("open");
+    });
+
+    document.getElementById("toggleAuthModeBtn").addEventListener("click", () => {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById("authModalTitle").textContent = isSignUpMode
+        ? "Create Zentrix AI Account"
+        : "Sign In to Zentrix AI";
+      document.getElementById("authSubmitBtn").textContent = isSignUpMode ? "Sign Up" : "Sign In";
+      document.getElementById("toggleAuthModeBtn").textContent = isSignUpMode
+        ? "Already have an account? Sign In"
+        : "Need an account? Create one";
+      authStatus.textContent = "";
+    });
+
+    authForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!supabaseClient) {
+        authStatus.textContent = "Add your real SUPABASE_PUBLISHABLE_KEY in index.html first.";
+        authStatus.className = "status-msg error";
+        return;
+      }
+
+      const email = document.getElementById("authEmail").value.trim();
+      const password = document.getElementById("authPassword").value;
+      authStatus.textContent = isSignUpMode ? "Creating account..." : "Signing in...";
+      authStatus.className = "status-msg";
+
+      const { data, error } = isSignUpMode
+        ? await supabaseClient.auth.signUp({ email, password })
+        : await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        authStatus.textContent = error.message;
+        authStatus.className = "status-msg error";
+        return;
+      }
+
+      if (data.session) {
+        updateAuthUI(data.session);
+        authModal.classList.remove("open");
+      } else {
+        authStatus.textContent = "Check your email to confirm your account, then sign in.";
       }
     });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      updateAuthUI(null);
+    });
+
+    function updateAuthUI(session) {
+      currentSession = session;
+      const openBtn = document.getElementById("openAuthBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const userBadge = document.getElementById("userBadge");
+
+      if (session && session.user) {
+        openBtn.style.display = "none";
+        logoutBtn.style.display = "inline-flex";
+        userBadge.style.display = "inline-block";
+        userBadge.textContent = session.user.email;
+      } else {
+        openBtn.style.display = "inline-flex";
+        logoutBtn.style.display = "none";
+        userBadge.style.display = "none";
+      }
+    }
+
+    if (supabaseClient) {
+      supabaseClient.auth.getSession().then(({ data }) => updateAuthUI(data.session));
+      supabaseClient.auth.onAuthStateChange((_event, session) => updateAuthUI(session));
+    }
   </script>
 </body>
 </html>
